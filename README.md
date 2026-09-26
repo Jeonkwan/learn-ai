@@ -79,7 +79,7 @@ Rather than treating AI services as black boxes or focusing on toy Python snippe
   Why standard RAG fails on global corpus questions; Microsoft GraphRAG hierarchical community summarization.
 - **[Lesson 0019: Hybrid Query Routing & Unified Retrieval Engine](lessons/0019-hybrid-query-routing-unified-retrieval-engine.html)**  
   Building intelligent query routers: classifying vector vs. graph vs. hybrid questions; prompt synthesis with Reciprocal Rank Fusion (RRF).
-- **[Lesson 0020: Day-2 DevOps, Evaluation, Cost Optimization & Security](lessons/0020-day2-devops-evaluation-cost-security.html)**  
+- **[Lesson 0020: Production GCP Architecture, Security & Compliance](lessons/0020-production-gcp-architecture-security-compliance.html)**  
   RAG Triad evaluation (Faithfulness, Answer Relevance, Context Recall); cache tiers; prompt injection defense; RBAC & column-level security.
 
 ---
