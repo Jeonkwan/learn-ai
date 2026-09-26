@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 0006: Chunking Architectures & Boundary Strategies</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <style>
+    .chunk-vis-container {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1.75rem 0;
+    }
+    .chunk-block {
+      border: 2px dashed #0969da;
+      background: #f0f7ff;
+      border-radius: 6px;
+      padding: 0.85rem;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+      position: relative;
+    }
+    .overlap-indicator {
+      background: #fff3c4;
+      border: 1px solid #d4a72c;
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+      font-weight: 600;
+      color: #7a5800;
+    }
+    .strategy-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-family: var(--font-sans);
+      font-size: 0.88rem;
+    }
+    table th, table td {
+      border: 1px solid var(--border);
+      padding: 0.6rem 0.8rem;
+      text-align: left;
+    }
+    table th { background: var(--code-bg); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="lesson-meta">Lesson 0006 &bull; Ingestion & Chunking</div>
+    <h1>Chunking Architectures & Boundary Strategies</h1>
+    <div class="subtitle">Why arbitrary character splits fracture evidence, and how hierarchical chunking preserves context.</div>
+  </header>
+
+  <main>
+    <p>Now that Document AI has parsed our documents into clean text and structured markdown tables, we face a crucial engineering decision: <strong>How do we slice this text into pieces?</strong></p>
+
+    <p>This process is called <strong>Chunking</strong>. In financial crime intelligence, chunking is not just a preprocessing utility; it directly determines whether your vector search discovers a money laundering scheme or misses it completely.</p>
+
+    <h2>The Chunk Sizing Goldilocks Dilemma</h2>
+
+    <ul>
+      <li><strong>If chunks are too small (e.g., 50 tokens):</strong> The embedding is hyper-specific, but lacks sufficient context. If Chunk A contains <em>"Wire transfer of $5M"</em> and Chunk B contains <em>"sent to sanctioned entity BelGaz"</em>, neither chunk alone contains the full crime.</li>
+      <li><strong>If chunks are too large (e.g., 4,000 tokens):</strong> The embedding model averages out dozens of different topics across 8 pages into a blurry, generic vector. Specific needle-in-a-haystack transactions get drowned out.</li>
+      <li><strong>The Sweet Spot:</strong> Typically <strong>300 to 500 tokens</strong> for narrative text, with a <strong>10% to 15% sliding overlap</strong>.</li>
+    </ul>
+
+    <h2>The Sliding Window Overlap Mechanics</h2>
+    <p>What happens if a crucial sentence falls right across the dividing line between Chunk 1 and Chunk 2? Without an overlap, the beginning of the sentence is in Chunk 1 and the end is in Chunk 2—fracturing the meaning in both vector embeddings.</p>
+
+    <div class="chunk-vis-container">
+      <div class="chunk-block">
+        <strong>Chunk 1 (Tokens 1 to 500):</strong><br>
+        "...Subject incorporated three holding entities in Nicosia. Over a 30-day period, funds were structured through accounts at Branch #12. <span class="overlap-indicator">[SLIDING OVERLAP BEGINS: The ultimate beneficiary of all three entities was identified as foreign national Boris K.]</span>"
+      </div>
+      <div class="chunk-block" style="border-color: #1a7f37; background: #f6fcf8;">
+        <strong>Chunk 2 (Tokens 450 to 950):</strong><br>
+        "<span class="overlap-indicator">[SLIDING OVERLAP CONTINUES: The ultimate beneficiary of all three entities was identified as foreign national Boris K.]</span> Further examination revealed that Boris K. utilized nominee directors to circumvent Western energy sanctions..."
+      </div>
+    </div>
+
+    <h2>The 3 Production Chunking Strategies</h2>
+
+    <table class="strategy-table">
+      <thead>
+        <tr>
+          <th>Strategy</th>
+          <th>How It Operates</th>
+          <th>Best Used For</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>1. Recursive Character Splitting</strong></td>
+          <td>Tries splitting by paragraphs (<code>\n\n</code>). If a paragraph is still larger than 500 tokens, it splits by sentences (<code>\n</code>, <code>. </code>), and only splits words as an absolute last resort.</td>
+          <td>Industry standard default for investigative write-ups and SAR narratives.</td>
+        </tr>
+        <tr>
+          <td><strong>2. Document-Aware (Markdown) Splitting</strong></td>
+          <td>Splits text based on structural markdown headers (<code># Section</code>, <code>## Subsection</code>) and keeps entire table blocks together in a single chunk.</td>
+          <td>Compliance manuals, regulatory statutes, and Document AI output.</td>
+        </tr>
+        <tr>
+          <td><strong>3. Hierarchical (Parent-Child) Chunking</strong></td>
+          <td>Slices text into tiny child chunks (100 tokens) for search indexing, but links them to their 1,000-token parent passage. Vector search matches the child, but injects the full parent into the LLM context.</td>
+          <td>Complex legal depositions where fine-grained precision must be paired with broader context.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout tip">
+      <div class="callout-title">DevOps Takeaway: Preserving Metadata at the Chunk Level</div>
+      Every chunk stored in your pipeline must carry rich metadata: <code>case_id</code>, <code>source_file_gcs_uri</code>, <code>page_number</code>, and <code>chunk_index</code>. This enables downstream filtering and audit logging.
+    </div>
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz-card">
+      <div class="quiz-badge">Retrieval Practice</div>
+      <div class="quiz-question">
+        What is the primary operational purpose of applying a 10% sliding token overlap across consecutive document chunks?
+      </div>
+
+      <div class="quiz-options">
+        <button class="quiz-option-btn" onclick="checkAnswer(this, true)">
+          Prevents fracturing critical semantic sentences situated directly along chunk division boundaries.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Reduces overall memory consumption across distributed vector database search index clusters.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Eliminates the requirement for executing natural language embedding models during ingestion.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Guarantees complete cryptographic encryption for confidential financial crime records in transit.
+        </button>
+      </div>
+
+      <div id="quiz-feedback" class="quiz-feedback"></div>
+    </div>
+
+    <h2>Primary Source Recommendation</h2>
+    <p>Read LlamaIndex's architecture guide on hierarchical retrieval:</p>
+    <p>&bull; <a href="https://docs.llamaindex.ai/en/stable/examples/node_postprocessor/HierarchicalNodePostprocessor/" target="_blank" rel="noopener"><strong>Hierarchical Node Parsing & Parent-Child Retrieval Guide</strong></a>.<br>
+    <em>Learn how decoupling the unit of search (small chunks) from the unit of reasoning (larger parent context) maximizes retrieval accuracy.</em></p>
+
+    <div class="callout">
+      <div class="callout-title">Teacher Reminder</div>
+      Now that our text is cleanly chunked with metadata, how do we transform these strings into high-dimensional geometric coordinates? We demystify the math and the GCP APIs in Lesson 7: <strong>Embeddings Demystified with Vertex AI text-embedding-004</strong>.
+    </div>
+  </main>
+
+  <footer>
+    <div><a href="0005-document-ingestion-parsing-document-ai.html">&larr; Previous: Lesson 0005</a></div>
+    <div><a href="0007-embeddings-demystified-vertex-ai.html">Next: Lesson 0007 &rarr;</a></div>
+  </footer>
+
+  <script>
+    function checkAnswer(btn, isCorrect) {
+      const allButtons = document.querySelectorAll('.quiz-option-btn');
+      allButtons.forEach(b => {
+        b.disabled = true;
+        b.classList.remove('selected-correct', 'selected-incorrect');
+      });
+
+      const feedback = document.getElementById('quiz-feedback');
+      if (isCorrect) {
+        btn.classList.add('selected-correct');
+        feedback.className = 'quiz-feedback show-correct';
+        feedback.innerHTML = '<strong>Correct!</strong> A sliding overlap guarantees that a critical sentence situated right at token boundary #500 is not split in half, preserving its semantic meaning in both chunks.';
+      } else {
+        btn.classList.add('selected-incorrect');
+        feedback.className = 'quiz-feedback show-incorrect';
+        feedback.innerHTML = '<strong>Not quite.</strong> The sliding overlap exists specifically to preserve semantic integrity at the edges of chunks, ensuring sentences and context are not fractured across boundary splits.';
+      }
+    }
+  </script>
+</body>
+</html>

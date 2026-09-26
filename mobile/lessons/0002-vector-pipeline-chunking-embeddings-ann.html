@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Lesson 0002: The Vector Pipeline — Chunking, Embeddings & ANN Indexing</title>
+  <style>
+
+:root {
+  --bg: #faf9f5;
+  --surface: #ffffff;
+  --text: #1d1d1f;
+  --text-muted: #6e6e73;
+  --border: #e5e5ea;
+  --accent: #0071e3;
+  --accent-light: #e8f2ff;
+  --accent-dark: #0056b3;
+  --success-bg: #eaf8ee;
+  --success-text: #1e7e34;
+  --danger-bg: #fdeeee;
+  --danger-text: #d93025;
+  --code-bg: #f2f2f7;
+  --code-border: #e5e5ea;
+  --font-serif: -apple-system-ui-serif, "Charter", "New York", Palatino, serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #000000;
+    --surface: #1c1c1e;
+    --text: #f2f2f7;
+    --text-muted: #8e8e93;
+    --border: #2c2c2e;
+    --accent: #2997ff;
+    --accent-light: #152942;
+    --accent-dark: #58a6ff;
+    --success-bg: #142e1b;
+    --success-text: #34c759;
+    --danger-bg: #321617;
+    --danger-text: #ff453a;
+    --code-bg: #1c1c1e;
+    --code-border: #38383a;
+  }
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-serif);
+  font-size: clamp(16px, 3.8vw, 18px);
+  line-height: 1.65;
+  padding: 1rem 1rem 5.5rem;
+  max-width: 680px;
+  margin: 0 auto;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (min-width: 768px) {
+  body {
+    max-width: 760px;
+    padding: 2rem 2rem 6.5rem;
+  }
+}
+
+.mobile-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.mobile-top-bar a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.lesson-meta {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+}
+
+h1 {
+  font-family: var(--font-sans);
+  font-size: clamp(1.45rem, 5vw, 2.05rem);
+  line-height: 1.22;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  font-size: clamp(0.92rem, 3.4vw, 1.05rem);
+  color: var(--text-muted);
+  font-style: italic;
+  margin-bottom: 1.5rem;
+  line-height: 1.45;
+}
+
+h2 {
+  font-family: var(--font-sans);
+  font-size: clamp(1.15rem, 3.8vw, 1.4rem);
+  font-weight: 600;
+  margin: 2rem 0 0.75rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.3rem;
+  letter-spacing: -0.01em;
+}
+
+h3 {
+  font-family: var(--font-sans);
+  font-size: clamp(1.02rem, 3.4vw, 1.15rem);
+  font-weight: 600;
+  margin: 1.4rem 0 0.45rem;
+}
+
+p {
+  margin-bottom: 1.15rem;
+}
+
+ul, ol {
+  margin-bottom: 1.25rem;
+  padding-left: 1.3rem;
+}
+
+li {
+  margin-bottom: 0.35rem;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background-color: var(--code-bg);
+  border: 1px solid var(--code-border);
+  padding: 0.15em 0.35em;
+  border-radius: 4px;
+  word-break: break-word;
+}
+
+pre {
+  background-color: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-radius: 8px;
+  padding: 0.9rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 1.1rem 0 1.4rem;
+  font-family: var(--font-mono);
+  font-size: clamp(0.75rem, 2.7vw, 0.84rem);
+  line-height: 1.45;
+}
+
+pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: inherit;
+  word-break: normal;
+}
+
+.callout {
+  background-color: var(--surface);
+  border-left: 4px solid var(--accent);
+  border-top: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 1rem;
+  margin: 1.4rem 0;
+  border-radius: 0 8px 8px 0;
+}
+
+.callout.tip {
+  border-left-color: var(--success-text);
+}
+
+.callout.warning {
+  border-left-color: #f59e0b;
+}
+
+.callout-title {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.3rem;
+}
+
+.comparison-grid, .service-card-grid, .algo-compare-grid, .algo-grid, .compare-rag-grid, .metric-grid, .scramble-box {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.9rem;
+  margin: 1.4rem 0;
+}
+
+@media (min-width: 641px) {
+  .comparison-grid, .service-card-grid, .algo-compare-grid, .algo-grid, .compare-rag-grid, .metric-grid, .scramble-box {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.grid-col, .service-card, .algo-card, .algo-box, .rag-col, .metric-card, .scramble-col, .math-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.infra-diagram, .hierarchy-box, .funnel-container, .graph-schema-box, .extraction-flow, .er-diagram, .router-diagram, .blueprint-box, .prompt-template-box, .artifact-snippet, .cypher-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.9rem;
+  margin: 1.25rem 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  font-family: var(--font-mono);
+  font-size: clamp(0.72rem, 2.5vw, 0.82rem);
+  line-height: 1.42;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.25rem 0;
+  font-family: var(--font-sans);
+  font-size: clamp(0.8rem, 2.8vw, 0.88rem);
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+table th, table td {
+  border: 1px solid var(--border);
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+}
+
+table th {
+  background: var(--code-bg);
+  font-weight: 600;
+}
+
+.quiz-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.2rem;
+  margin: 1.8rem 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.quiz-badge {
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: var(--accent-light);
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+}
+
+.quiz-question {
+  font-family: var(--font-sans);
+  font-size: clamp(0.92rem, 3.6vw, 1.02rem);
+  font-weight: 600;
+  line-height: 1.4;
+  margin-bottom: 0.9rem;
+  color: var(--text);
+}
+
+.quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.quiz-option-btn {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  text-align: left;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 0.9rem;
+  font-family: var(--font-sans);
+  font-size: clamp(0.82rem, 3vw, 0.88rem);
+  line-height: 1.4;
+  color: var(--text);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.1s ease, background 0.15s ease;
+}
+
+.quiz-option-btn:active {
+  transform: scale(0.98);
+}
+
+.quiz-option-btn.selected-correct {
+  background: var(--success-bg);
+  border-color: var(--success-text);
+  color: var(--success-text);
+  font-weight: 600;
+}
+
+.quiz-option-btn.selected-incorrect {
+  background: var(--danger-bg);
+  border-color: var(--danger-text);
+  color: var(--danger-text);
+}
+
+.quiz-feedback {
+  display: none;
+  font-family: var(--font-sans);
+  font-size: 0.86rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: 8px;
+  margin-top: 0.9rem;
+  line-height: 1.42;
+}
+
+.quiz-feedback.show-correct {
+  display: block;
+  background: var(--success-bg);
+  color: var(--success-text);
+}
+
+.quiz-feedback.show-incorrect {
+  display: block;
+  background: var(--danger-bg);
+  color: var(--danger-text);
+}
+
+.mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(250, 249, 245, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  padding: 0.65rem 1rem max(0.65rem, env(safe-area-inset-bottom));
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  z-index: 1000;
+}
+
+@media (prefers-color-scheme: dark) {
+  .mobile-bottom-nav {
+    background: rgba(18, 18, 20, 0.92);
+  }
+}
+
+.nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  touch-action: manipulation;
+}
+
+.nav-btn:active {
+  transform: scale(0.96);
+}
+
+.nav-btn.primary {
+  background: var(--accent);
+  color: #ffffff;
+  border-color: var(--accent);
+}
+
+.nav-btn.disabled {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+  </style>
+</head>
+<body>
+  <div class="mobile-top-bar">
+    <a href="../index.html">&larr; Course Index</a>
+    <span>Lesson 02 of 20</span>
+  </div>
+
+  <header>
+    
+    <div class="lesson-meta">Lesson 0002 &bull; The Vector Pipeline</div>
+    <h1>The Vector Pipeline: From Raw Narrative to 3ms Retrieval</h1>
+    <div class="subtitle">How unstructured financial crime text is sliced, encoded into high-dimensional space, and queried at enterprise scale on GCP.</div>
+  
+  </header>
+
+  <main>
+    
+    <p>In our previous lesson, we established that vector search solves the <em>fuzzy semantic retrieval</em> problem. But how does unstructured human writing actually become something a search engine can query in 3 milliseconds?</p>
+
+    <p>Let's trace a concrete case through the 4 stages of the pipeline: an investigator analyzing a confidential <strong>Suspicious Activity Report (SAR) narrative</strong>.</p>
+
+    <!-- Step 1 -->
+    <div class="pipeline-step">
+      <div class="step-number">1</div>
+      <div class="step-content">
+        <h3>Stage 1: Document Ingestion & Chunking</h3>
+        <p>A typical investigation dossier spans 80 pages of text. Embedding models cannot ingest an entire 80-page book in one shot (most embedding models cap out at 512–2048 tokens). If you force it, the embedding becomes a generic blur that loses fine details.</p>
+
+        <p>We slice the document into discrete chunks (e.g., <strong>500 tokens with a 50-token sliding overlap</strong>). The overlap ensures that a crucial sentence sitting right on a boundary isn't fractured.</p>
+
+        <div class="artifact-snippet">
+          [Chunk #042 | Source: SAR_Case_2024_09.pdf | Page: 14]<br>
+          "Subject opened multiple domestic accounts at branch #104. Over a 12-day window, subject deposited structured cash sums ($9,800, $9,500, $9,200) specifically staying beneath the $10,000 Currency Transaction Report (CTR) threshold. Funds were subsequently converted into high-value antique jewelry..."
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="pipeline-step">
+      <div class="step-number">2</div>
+      <div class="step-content">
+        <h3>Stage 2: Embedding Generation (Vectorization)</h3>
+        <p>We pass Chunk #042 through a neural embedding model (such as Google Vertex AI's <code>text-embedding-004</code>). The model projects the conceptual meaning of this text into a <strong>768-dimensional coordinate</strong>:</p>
+
+        <div class="artifact-snippet">
+          Embedding = [-0.0412, 0.0891, -0.0125, 0.3120, ..., 0.0048] &rarr; (768 floating point numbers)
+        </div>
+
+        <p>In this geometric space, the mathematical angle between vectors represents conceptual meaning. Even if another document uses completely different words like <em>"smurfing micro-deposits to evade mandatory treasury filings"</em>, its vector coordinate will land right next to Chunk #042.</p>
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="pipeline-step">
+      <div class="step-number">3</div>
+      <div class="step-content">
+        <h3>Stage 3: Vector Indexing & ANN Search (The DevOps Layer)</h3>
+        <p>A bank might accumulate 10 million text chunks across past cases. When an investigator types a query:</p>
+        <p><em>"Find past cases where suspects used repeated cash deposits just below filing thresholds."</em></p>
+
+        <p>The query itself is converted into a 768-dimensional vector. How do we find the top 5 closest chunks among 10,000,000 candidates?</p>
+
+        <p>If you calculate the exact cosine similarity against every single vector (brute-force kNN), you run <strong>O(N) operations</strong>. At 10 million vectors, this takes seconds of CPU time and kills throughput.</p>
+
+        <p>Instead, vector databases (like <strong>Google Cloud Vertex AI Vector Search</strong>) use <strong>Approximate Nearest Neighbor (ANN)</strong> algorithms like <strong>ScaNN</strong> or <strong>HNSW</strong>. By organizing the high-dimensional space into hierarchical clusters and navigation graphs, it finds the top 99% closest vectors in <strong>under 5 milliseconds</strong> without scanning the entire database.</p>
+      </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="pipeline-step">
+      <div class="step-number">4</div>
+      <div class="step-content">
+        <h3>Stage 4: Prompt Augmentation & Generation</h3>
+        <p>The vector search returns the top-3 matching chunks. The application injects them into the LLM system prompt as verified context:</p>
+
+        <pre><code>You are an AML Intelligence Assistant. Use ONLY the provided evidence:
+[EVIDENCE 1]: Chunk #042 (SAR_Case_2024_09.pdf): "Subject deposited structured cash..."
+[EVIDENCE 2]: Chunk #118 (SAR_Case_2023_11.pdf): "Evading CTR reports via smurfing..."
+
+INVESTIGATOR QUESTION: Did we observe structuring patterns in recent watch or jewelry cases?
+ASSISTANT: Yes. In SAR Case 2024-09, the subject executed structured deposits ($9.8k, $9.5k) to stay below the $10,000 CTR limit, subsequently converting the funds into antique jewelry.</code></pre>
+      </div>
+    </div>
+
+    <div class="callout tip">
+      <div class="callout-title">DevOps Infrastructure Takeaway</div>
+      On Google Cloud, you don't manage low-level vector indexing binaries yourself. You write embeddings to Cloud Storage (GCS), trigger a batch index build in <strong>Vertex AI Vector Search</strong> (powered by ScaNN), and deploy to a dedicated <strong>Index Endpoint</strong> with autoscaling.
+    </div>
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz-card">
+      <div class="quiz-badge">Retrieval Practice</div>
+      <div class="quiz-question">
+        In an AML pipeline indexing 10 million transactions and SAR narratives, why do vector databases use Approximate Nearest Neighbor (ANN) indexing instead of exact K-Nearest Neighbor (kNN) search?
+      </div>
+
+      <div class="quiz-options">
+        <button class="quiz-option-btn" onclick="checkAnswer(this, true)">
+          Exact kNN requires scanning all vectors, causing unacceptable latency.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Approximate ANN consumes more memory by storing redundant replicas.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Exact kNN generates corrupted embedding vectors during concurrent traffic.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Approximate ANN guarantees perfect mathematical recall across every request.
+        </button>
+      </div>
+
+      <div id="quiz-feedback" class="quiz-feedback"></div>
+    </div>
+
+    <h2>Primary Source Recommendation</h2>
+    <p>Read Google Research's breakthrough paper behind Vertex AI Vector Search:</p>
+    <p>&bull; <a href="https://arxiv.org/abs/1908.10396" target="_blank" rel="noopener"><strong>Accelerating Large-Scale Inference with Anisotropic Vector Quantization (ScaNN)</strong> — Guo et al. (ICML 2020)</a>.<br>
+    <em>Focus on the introduction: it explains why standard Euclidean quantization distorts dot-product ranking, and how score-aware quantization enables Google-scale vector retrieval at millisecond latencies.</em></p>
+
+    <div class="callout">
+      <div class="callout-title">Teacher Reminder</div>
+      Notice what this vector pipeline gave us: <strong>pure semantic similarity</strong>. But what happens when an investigator asks: <em>"Find the account that received wires from this jeweler and trace who owns that account?"</em> Vectors hit a wall here.<br><br>
+      In Lesson 3, we build the other half of the engine: <strong>The Knowledge Graph Pipeline with Neo4j and Cypher</strong>.
+    </div>
+  
+  </main>
+
+  <div class="mobile-bottom-nav">
+    <a class="nav-btn" href="0001-unstructured-data-vectors-vs-graphs.html">&larr; Prev</a>
+    <a class="nav-btn" href="../index.html">📚 Index</a>
+    <a class="nav-btn primary" href="0003-gcp-ai-ecosystem-devops-guide.html">Next &rarr;</a>
+  </div>
+
+  <script>
+
+    function checkAnswer(btn, isCorrect) {
+      const allButtons = document.querySelectorAll('.quiz-option-btn');
+      allButtons.forEach(b => {
+        b.disabled = true;
+        b.classList.remove('selected-correct', 'selected-incorrect');
+      });
+
+      const feedback = document.getElementById('quiz-feedback');
+      if (isCorrect) {
+        btn.classList.add('selected-correct');
+        feedback.className = 'quiz-feedback show-correct';
+        feedback.innerHTML = '<strong>Correct!</strong> Exact kNN requires computing distance against every single one of the 10 million vectors (an O(N) linear scan), creating multi-second query delays. ANN trades a fraction of a percent of theoretical recall for sub-5ms response times.';
+      } else {
+        btn.classList.add('selected-incorrect');
+        feedback.className = 'quiz-feedback show-incorrect';
+        feedback.innerHTML = '<strong>Not quite.</strong> The fundamental constraint is computational time: brute-force exact kNN must evaluate every vector in the database (O(N) complexity). ANN creates indexed search spaces (graphs/clusters) to achieve millisecond response times.';
+      }
+    }
+  
+  </script>
+</body>
+</html>

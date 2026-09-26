@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 0005: Document Ingestion & Parsing with Cloud Document AI</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <style>
+    .scramble-box {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      margin: 1.75rem 0;
+    }
+    .scramble-col {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1.1rem;
+      font-size: 0.88rem;
+    }
+    .scramble-bad {
+      border-left: 4px solid var(--danger-text);
+      background: #fffafa;
+    }
+    .scramble-good {
+      border-left: 4px solid var(--success-text);
+      background: #fafdfa;
+    }
+    @media (max-width: 650px) {
+      .scramble-box {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="lesson-meta">Lesson 0005 &bull; Ingestion & Parsing</div>
+    <h1>Document Ingestion with Cloud Document AI</h1>
+    <div class="subtitle">Why naive PDF extraction corrupts financial tables, and how GCP Document AI preserves spatial geometry.</div>
+  </header>
+
+  <main>
+    <p>In financial crime investigations, valuable evidence rarely arrives as pristine UTF-8 text files. It arrives as scanned PDF bank statements, bills of lading in Trade-Based Money Laundering (TBML), and complex multi-column wire ledgers.</p>
+
+    <p>Many novice AI projects make a fatal error: they run a simple open-source text scraper (like basic <code>pypdf</code>) and immediately dump the extracted strings into a vector database. Let's see why this creates a disaster in banking data.</p>
+
+    <h2>The "Table Scramble" Catastrophe</h2>
+    <p>PDF is not a document format; it is a <strong>printing instruction stream</strong>. It stores commands like <em>"draw character 'A' at coordinates (x=102, y=450)"</em>. It has no built-in concept of a table, row, or column.</p>
+
+    <div class="scramble-box">
+      <div class="scramble-col scramble-bad">
+        <strong>Naive Text Scraper (Reading Left-to-Right Across Lines):</strong>
+        <pre><code>Date Beneficiary Amount Currency
+09/12 Shell Corp A $450,000 USD
+09/13 Luxury Imports $120,000 EUR
+
+Becomes raw text:
+"Date Beneficiary Amount Currency 09/12 Shell Corp A $450,000 USD 09/13 Luxury Imports $120,000 EUR"
+(If text wraps, lines merge: "09/12 $450,000 Shell Corp A Luxury Imports $120,000")</code></pre>
+        <p style="color: var(--danger-text); font-size: 0.85rem; margin-top: 0.5rem;">
+          Result: The connection between the date, the company, and the dollar amount is hopelessly scrambled.
+        </p>
+      </div>
+
+      <div class="scramble-col scramble-good">
+        <strong>Layout-Aware Extraction (Cloud Document AI):</strong>
+        <pre><code>| Date  | Beneficiary    | Amount   | Currency |
+|-------|----------------|----------|----------|
+| 09/12 | Shell Corp A   | $450,000 | USD      |
+| 09/13 | Luxury Imports | $120,000 | EUR      |</code></pre>
+        <p style="color: var(--success-text); font-size: 0.85rem; margin-top: 0.5rem;">
+          Result: Markdown table structure preserves cell relationships so the LLM knows exactly who received $450,000.
+        </p>
+      </div>
+    </div>
+
+    <h2>How Google Cloud Document AI Solves This</h2>
+    <p><strong>Cloud Document AI</strong> uses vision-language computer vision models (such as LayoutLM) to visually perceive the page layout just like a human investigator. It classifies regions into paragraphs, headers, and grid tables.</p>
+
+    <h3>Choosing the Right Processor Type in GCP</h3>
+    <ul>
+      <li><strong>OCR Processor:</strong> Fast, economical text recognition for pure narrative memos, court depositions, and emails.</li>
+      <li><strong>Form Parser (<code>FORM_PARSER_v2</code>):</strong> Detects key-value pairs (e.g., <code>"Beneficiary Name:" &rarr; "Apex Holdings Ltd"</code>) and structured tabular grids. Essential for invoices and customs declarations.</li>
+      <li><strong>Specialized Processors:</strong> Pre-trained models tailored for specific banking documents (e.g., <code>BANK_STATEMENT_PROCESSOR</code>, <code>INVOICE_PROCESSOR</code>).</li>
+    </ul>
+
+    <h2>Triggering Document AI from Bash / DevOps Pipelines</h2>
+    <p>In an event-driven GCP pipeline, a Cloud Storage upload triggers a Cloud Run worker that invokes the Document AI processor via REST:</p>
+
+    <pre><code># Process a trade invoice PDF via Document AI REST API
+curl -X POST \
+  -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+  -H "Content-Type: application/json; charset=utf-8" \
+  "https://${LOCATION}-documentai.googleapis.com/v1/projects/${PROJECT_ID}/locations/${LOCATION}/processors/${PROCESSOR_ID}:process" \
+  -d '{
+    "rawDocument": {
+      "content": "'$(base64 -i customs_declaration.pdf)'",
+      "mimeType": "application/pdf"
+    }
+  }'</code></pre>
+
+    <p>The response returns a structured JSON payload containing coordinates, text blocks, and parsed table cells that we can serialize directly into clean Markdown tables before chunking.</p>
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz-card">
+      <div class="quiz-badge">Retrieval Practice</div>
+      <div class="quiz-question">
+        Why should financial crime engineering pipelines parse trade invoices using layout-aware models like Document AI instead of naive string scrapers?
+      </div>
+
+      <div class="quiz-options">
+        <button class="quiz-option-btn" onclick="checkAnswer(this, true)">
+          Layout vision models preserve relational bindings between row cells and column headers.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Layout vision models reduce cloud storage bucket costs through automated compression algorithms.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Layout vision models convert all unstructured documents directly into high-dimensional vector embeddings.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Layout vision models encrypt sensitive transaction payloads using hardware security module keys.
+        </button>
+      </div>
+
+      <div id="quiz-feedback" class="quiz-feedback"></div>
+    </div>
+
+    <h2>Primary Source Recommendation</h2>
+    <p>Read Google Cloud's developer guide on handling complex tables:</p>
+    <p>&bull; <a href="https://cloud.google.com/document-ai/docs/handle-response#tables" target="_blank" rel="noopener"><strong>Google Cloud Document AI: Handling Processed Document Responses & Tables</strong></a>.<br>
+    <em>Examine the schema for <code>headerRows</code> and <code>bodyRows</code> to see how cell geometries are assembled.</em></p>
+
+    <div class="callout">
+      <div class="callout-title">Teacher Reminder</div>
+      Now that we have clean, structure-preserved text, we can slice it into optimal sizes for retrieval. In Lesson 6, we examine: <strong>Chunking Architectures & Boundary Strategies</strong>.
+    </div>
+  </main>
+
+  <footer>
+    <div><a href="0004-fundamental-unit-tokens-tokenizers-context.html">&larr; Previous: Lesson 0004</a></div>
+    <div><a href="0006-chunking-architectures-boundary-strategies.html">Next: Lesson 0006 &rarr;</a></div>
+  </footer>
+
+  <script>
+    function checkAnswer(btn, isCorrect) {
+      const allButtons = document.querySelectorAll('.quiz-option-btn');
+      allButtons.forEach(b => {
+        b.disabled = true;
+        b.classList.remove('selected-correct', 'selected-incorrect');
+      });
+
+      const feedback = document.getElementById('quiz-feedback');
+      if (isCorrect) {
+        btn.classList.add('selected-correct');
+        feedback.className = 'quiz-feedback show-correct';
+        feedback.innerHTML = '<strong>Correct!</strong> Simple text extractors read raw coordinate streams, which mixes columns together. Layout-aware models (Document AI) visually detect tabular grids, ensuring amounts stay tied to their correct beneficiaries.';
+      } else {
+        btn.classList.add('selected-incorrect');
+        feedback.className = 'quiz-feedback show-incorrect';
+        feedback.innerHTML = '<strong>Not quite.</strong> The critical failure of naive scrapers is scrambling tabular data (mixing dates, beneficiaries, and amounts). Layout-aware parsing preserves the cell-to-header relationships.';
+      }
+    }
+  </script>
+</body>
+</html>

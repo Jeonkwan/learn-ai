@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reference: Google Cloud AI & Data Services Cheat Sheet</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <style>
+    table.product-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0 2rem;
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+    }
+    table.product-table th, table.product-table td {
+      border: 1px solid var(--border);
+      padding: 0.75rem 1rem;
+      text-align: left;
+    }
+    table.product-table th {
+      background-color: var(--code-bg);
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    table.product-table tr:nth-child(even) td {
+      background-color: #fafbfc;
+    }
+    .gcp-tag {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      background: #e8f0fe;
+      color: #1a73e8;
+      border: 1px solid #d2e3fc;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="lesson-meta">Architecture Reference Document #03</div>
+    <h1>Google Cloud AI & Data Architecture Cheat Sheet</h1>
+    <div class="subtitle">A DevOps reference for Vertex AI, Document AI, BigQuery Vector Search, and IAM roles.</div>
+  </header>
+
+  <main>
+    <h2>1. The Google Cloud AI Portfolio at a Glance</h2>
+    <p>Google Cloud organizes its AI stack into managed platform services under the <strong>Vertex AI</strong> umbrella, alongside specialized document processing and data warehouse search engines.</p>
+
+    <table class="product-table">
+      <thead>
+        <tr>
+          <th>GCP Service</th>
+          <th>What It Is (DevOps Analogy)</th>
+          <th>Primary Role in Unstructured AI Pipelines</th>
+          <th>Typical Latency / SLA</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="gcp-tag">Cloud Document AI</span></td>
+          <td>Specialized OCR & Document Layout Microservice</td>
+          <td>Extracts clean text, form key-values, and nested tables from scanned PDFs, bank statements, and invoices.</td>
+          <td>1s – 5s per document (Batch or Realtime API)</td>
+        </tr>
+        <tr>
+          <td><span class="gcp-tag">Vertex AI Model Garden</span></td>
+          <td>Managed Model Registry & API Gateway</td>
+          <td>Serves foundation models (Gemini 1.5 Pro / Flash) and embedding models (<code>text-embedding-004</code>).</td>
+          <td>50ms – 150ms for embeddings; streaming for LLM</td>
+        </tr>
+        <tr>
+          <td><span class="gcp-tag">Vertex AI Vector Search</span></td>
+          <td>Managed High-Scale Distributed ScaNN Index</td>
+          <td>Stores and searches millions of high-dimensional vectors with sub-5ms latency and metadata filtering.</td>
+          <td>&lt; 5ms p99 at 10,000+ QPS</td>
+        </tr>
+        <tr>
+          <td><span class="gcp-tag">BigQuery Vector Search</span></td>
+          <td>SQL Engine with Vector Indexing (IVF / HNSW)</td>
+          <td>Executes <code>VECTOR_SEARCH()</code> directly inside SQL queries alongside relational business tables.</td>
+          <td>Seconds to minutes (Analytical / Batch queries)</td>
+        </tr>
+        <tr>
+          <td><span class="gcp-tag">Vertex AI Search</span></td>
+          <td>Turnkey Managed Enterprise RAG Service</td>
+          <td>Out-of-the-box ingestion, chunking, indexing, and generative answers without managing vector indexes manually.</td>
+          <td>Managed end-to-end SLA</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>2. Key IAM Roles for AI Infrastructure</h2>
+    <p>Follow the principle of least privilege when configuring Service Accounts for Cloud Run ingestion workers or GKE agents.</p>
+
+    <table class="product-table">
+      <thead>
+        <tr>
+          <th>IAM Role</th>
+          <th>Resource Scope</th>
+          <th>Permissions Granted</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>roles/aiplatform.user</code></td>
+          <td>Vertex AI Platform</td>
+          <td>Call models (Gemini, text-embedding) and query Vector Search Index Endpoints.</td>
+        </tr>
+        <tr>
+          <td><code>roles/aiplatform.admin</code></td>
+          <td>Vertex AI Platform</td>
+          <td>Create/delete Vector Search indexes, deploy endpoints, update machine specs.</td>
+        </tr>
+        <tr>
+          <td><code>roles/documentai.apiUser</code></td>
+          <td>Document AI</td>
+          <td>Invoke Document AI processors (OCR, Form Parsers) for real-time and batch extraction.</td>
+        </tr>
+        <tr>
+          <td><code>roles/bigquery.dataViewer</code></td>
+          <td>BigQuery</td>
+          <td>Query BigQuery datasets and run <code>VECTOR_SEARCH()</code> SQL statements.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>3. Essential `gcloud` CLI Commands</h2>
+    <pre><code># 1. Print OAuth access token for raw curl testing
+ACCESS_TOKEN=$(gcloud auth print-access-token)
+
+# 2. Call Vertex AI text-embedding-004 via curl
+curl -X POST \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+  -H "Content-Type: application/json; charset=utf-8" \
+  "https://us-central1-aiplatform.googleapis.com/v1/projects/${PROJECT_ID}/locations/us-central1/publishers/google/models/text-embedding-004:predict" \
+  -d '{
+    "instances": [
+      { "content": "Subject opened structured accounts at branch 104." }
+    ]
+  }'
+
+# 3. List deployed Vector Search Index Endpoints
+gcloud ai index-endpoints list --region=us-central1
+
+# 4. Process document via Document AI
+gcloud documentai processors process PROCESSOR_ID \
+  --location=us \
+  --raw-document=path=sar_report.pdf,mime-type=application/pdf</code></pre>
+  </main>
+
+  <footer>
+    <div><a href="../reference/glossary.html">&larr; Back to Glossary</a></div>
+    <div>learn_ai architecture workspace</div>
+  </footer>
+</body>
+</html>

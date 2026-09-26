@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 0012: Prompt Augmentation, Context Assembly & Gemini on Vertex AI</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <style>
+    .prompt-template-box {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin: 1.5rem 0;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    .prompt-role {
+      color: #0969da;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="lesson-meta">Lesson 0012 &bull; Generation & Grounding</div>
+    <h1>Prompt Augmentation & Context Assembly</h1>
+    <div class="subtitle">Mitigating the 'Lost in the Middle' effect, deterministic generation, and calling Gemini on Vertex AI.</div>
+  </header>
+
+  <main>
+    <p>We have arrived at the final stage of the Vector Pipeline: <strong>Augmentation & Generation</strong>. Our retrieval engine has filtered out millions of noise chunks and handed us the 3 most relevant evidence passages.</p>
+
+    <p>Now, how do we assemble these passages into a prompt for Gemini 1.5 on Google Cloud such that the output is 100% auditable and free of hallucinations?</p>
+
+    <h2>The "Lost in the Middle" Attention Curve</h2>
+    <p>In 2023, Stanford and UC Berkeley researchers discovered a critical flaw in transformer attention mechanisms: <strong>LLMs remember facts placed at the very beginning and the very end of the context window, but frequently overlook facts placed in the middle.</strong></p>
+
+    <div class="callout warning">
+      <div class="callout-title">The U-Shaped Attention Curve</div>
+      If you provide 10 chunks of context, the model will pay strong attention to Chunks #1, #2, #9, and #10, while practically ignoring Chunks #4 through #7!
+      <br><br>
+      <strong>DevOps Mitigation:</strong> Always place your #1 highest-scoring re-ranked chunk at the <em>very top</em>, place your #2 chunk at the <em>very bottom</em>, and place instructions at the bookends.
+    </div>
+
+    <h2>The Production Financial Crime Prompt Template</h2>
+    <p>In high-stakes banking environments, the system prompt must strictly constrain the model to cite its sources and refuse to speculate:</p>
+
+    <div class="prompt-template-box">
+<span class="prompt-role">SYSTEM PROMPT:</span>
+You are a Senior Financial Crime Intelligence Assistant for an AML unit.
+Strict Operational Directives:
+1. Answer the query using ONLY the verified evidence excerpts below.
+2. Every factual claim MUST include a bracketed citation to the Source File and Chunk ID (e.g., [SAR_2024_09.pdf#chunk_042]).
+3. If the provided excerpts do not contain the answer, state: "I cannot find evidence in the archive." DO NOT speculate or invent facts.
+
+<span class="prompt-role">VERIFIED EVIDENCE EXCERPTS:</span>
+---
+[Source: SAR_2024_09.pdf | Chunk: 042 | Relevance: 0.96]
+"Subject deposited structured cash amounts ($9,800, $9,500) beneath the $10,000 threshold..."
+---
+[Source: Wire_Ledger_2024.pdf | Chunk: 118 | Relevance: 0.91]
+"Account 9901 transferred $19,300 to Mediterranean Luxury Yachts Ltd on Oct 4."
+---
+
+<span class="prompt-role">INVESTIGATOR QUERY:</span>
+Did Account 9901 engage in structuring and where did the proceeds go?
+    </div>
+
+    <h2>Invoking Vertex AI Gemini 1.5 via curl</h2>
+    <p>Notice the two crucial parameters in the API payload:</p>
+    <ul>
+      <li><code>temperature: 0.0</code> &rarr; Eliminates random token sampling. The model greedily chooses the most mathematically probable tokens, maximizing factual precision.</li>
+      <li><code>topP: 0.1</code> &rarr; Restricts token selection to high-probability tokens.</li>
+    </ul>
+
+    <pre><code>curl -X POST \
+  -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+  -H "Content-Type: application/json" \
+  "https://us-central1-aiplatform.googleapis.com/v1/projects/${PROJECT_ID}/locations/us-central1/publishers/google/models/gemini-1.5-flash:generateContent" \
+  -d '{
+    "contents": [{
+      "role": "user",
+      "parts": [{ "text": "...[INSERT ASSEMBLED PROMPT HERE]..." }]
+    }],
+    "generationConfig": {
+      "temperature": 0.0,
+      "maxOutputTokens": 1024,
+      "topP": 0.1
+    }
+  }'</code></pre>
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz-card">
+      <div class="quiz-badge">Retrieval Practice</div>
+      <div class="quiz-question">
+        In high-stakes AML investigations, why should the LLM generation temperature parameter be set to 0.0?
+      </div>
+
+      <div class="quiz-options">
+        <button class="quiz-option-btn" onclick="checkAnswer(this, true)">
+          Zero temperature forces deterministic sampling, minimizing speculative or hallucinated factual claims.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Zero temperature accelerates network throughput across distributed cloud storage bucket endpoints.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Zero temperature bypasses context window limits during multi-document investigative report analysis.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Zero temperature converts unstructured narrative documents into high dimensional vector embeddings.
+        </button>
+      </div>
+
+      <div id="quiz-feedback" class="quiz-feedback"></div>
+    </div>
+
+    <h2>Primary Source Recommendation</h2>
+    <p>Read Stanford's landmark paper on context positioning:</p>
+    <p>&bull; <a href="https://arxiv.org/abs/2307.03172" target="_blank" rel="noopener"><strong>Lost in the Middle: How Language Models Use Long Contexts</strong> — Liu et al. (TACL 2024)</a>.<br>
+    <em>Examine Figures 2 and 3: they prove that performance drops drastically when key information is located in the middle of retrieved documents.</em></p>
+
+    <div class="callout">
+      <div class="callout-title">Milestone Complete: The Vector Pipeline</div>
+      You have now mastered the entire Vector Pipeline from raw PDF parsing to prompt grounding!<br><br>
+      However, we know that vectors are blind to complex entity networks. In Lesson 13, we begin Phase 5: <strong>Knowledge Graphs & Property Graph Modeling (Nodes, Edges, Properties)</strong>.
+    </div>
+  </main>
+
+  <footer>
+    <div><a href="0011-retrieval-metadata-filtering-reranking.html">&larr; Previous: Lesson 0011</a></div>
+    <div><a href="0013-knowledge-graphs-property-graph-modeling.html">Next: Lesson 0013 &rarr;</a></div>
+  </footer>
+
+  <script>
+    function checkAnswer(btn, isCorrect) {
+      const allButtons = document.querySelectorAll('.quiz-option-btn');
+      allButtons.forEach(b => {
+        b.disabled = true;
+        b.classList.remove('selected-correct', 'selected-incorrect');
+      });
+
+      const feedback = document.getElementById('quiz-feedback');
+      if (isCorrect) {
+        btn.classList.add('selected-correct');
+        feedback.className = 'quiz-feedback show-correct';
+        feedback.innerHTML = '<strong>Correct!</strong> A temperature of 0.0 activates greedy decoding: the model strictly selects the highest-probability token at each step, eliminating random creative divergence and ensuring reproducible, factual answers.';
+      } else {
+        btn.classList.add('selected-incorrect');
+        feedback.className = 'quiz-feedback show-incorrect';
+        feedback.innerHTML = '<strong>Not quite.</strong> Temperature controls randomness in token selection. Setting it to 0.0 makes the model deterministic, which is essential for compliance and auditing to avoid hallucinated claims.';
+      }
+    }
+  </script>
+</body>
+</html>

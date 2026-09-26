@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Architecting Unstructured Data & Knowledge Retrieval for LLMs</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <style>
+    .course-index {
+      margin: 2rem 0;
+    }
+    .phase-section {
+      margin-bottom: 2.5rem;
+    }
+    .phase-title {
+      font-family: var(--font-sans);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--accent-dark);
+      border-bottom: 2px solid var(--accent-light);
+      padding-bottom: 0.4rem;
+      margin-bottom: 1rem;
+    }
+    .lesson-item {
+      display: flex;
+      align-items: baseline;
+      gap: 1rem;
+      padding: 0.6rem 0;
+      border-bottom: 1px solid #f0f2f5;
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+    }
+    .lesson-item:hover {
+      background: #fbfcfe;
+    }
+    .lesson-num {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      width: 100px;
+      flex-shrink: 0;
+    }
+    .lesson-link {
+      color: #0969da;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .lesson-link:hover {
+      text-decoration: underline;
+    }
+    .ref-badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      background: #e8f0fe;
+      color: #1a73e8;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      margin-right: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="lesson-meta">Architecture Masterclass &bull; 20-Part Curriculum</div>
+    <h1>Architecting Unstructured Data & Knowledge Retrieval for LLMs</h1>
+    <div class="subtitle">A DevOps and Systems Engineering Guide to Vectors, RAG, Neo4j Knowledge Graphs, and Google Cloud Architecture.</div>
+  </header>
+
+  <main>
+    <div class="callout tip">
+      <div class="callout-title">Workspace Grounding</div>
+      Every lesson in this curriculum is self-contained with responsive formatting, structural diagrams, interactive quizzes, and citations. All files are automatically synchronized to your iCloud Drive directory for offline reading on iOS devices.
+    </div>
+
+    <div class="callout" style="border-left-color: #9333ea; background: #faf5ff;">
+      <div class="callout-title" style="color: #7e22ce;">📱 iPhone & iPad Optimized Edition</div>
+      Reading on an iOS device? Open the dedicated <strong><a href="mobile/index.html" style="color: #7e22ce; font-weight: 700;">Mobile & Tablet Edition (mobile/index.html)</a></strong> — featuring 100% self-contained single-file HTML (fully styled inside the iOS Files app Quick Look), automatic Dark Mode, fluid typography, touch-friendly tap targets, and sticky bottom navigation.
+    </div>
+
+    <h2>Reference Documents & Cheat Sheets</h2>
+    <div style="margin: 1.25rem 0 2rem;">
+      <div class="lesson-item"><span class="ref-badge">REF 01</span> <a class="lesson-link" href="reference/glossary.html">Core Terminology Glossary</a></div>
+      <div class="lesson-item"><span class="ref-badge">REF 02</span> <a class="lesson-link" href="reference/vector-chunking-and-indexing.html">Vector Chunking & Indexing Architecture Sheet</a></div>
+      <div class="lesson-item"><span class="ref-badge">REF 03</span> <a class="lesson-link" href="reference/gcp-ai-products-cheatsheet.html">Google Cloud AI & Data Services Cheat Sheet</a></div>
+      <div class="lesson-item"><span class="ref-badge">REF 04</span> <a class="lesson-link" href="reference/cypher-graph-modeling-cheatsheet.html">Cypher & Knowledge Graph Modeling Cheat Sheet</a></div>
+    </div>
+
+    <h2>Course Curriculum</h2>
+
+    <div class="course-index">
+      <!-- Phase 1 -->
+      <div class="phase-section">
+        <div class="phase-title">Phase 1: Foundations & The GCP AI Landscape</div>
+        <div class="lesson-item">
+          <span class="lesson-num">Lesson 0001</span>
+          <a class="lesson-link" href="lessons/0001-unstructured-data-vectors-vs-graphs.html">The Unstructured Data Dilemma: Vectors vs. Knowledge Graphs</a>
+        </div>
+        <div class="lesson-item">
+          <span class="lesson-num">Lesson 0002</span>
+          <a class="lesson-link" href="lessons/0002-vector-pipeline-chunking-embeddings-ann.html">The Vector Pipeline: From Raw Narrative to 3ms Retrieval</a>
+        </div>
+        <div class="lesson-item">
+          <span class="lesson-num">Lesson 0003</span>
+          <a class="lesson-link" href="lessons/0003-gcp-ai-ecosystem-devops-guide.html">The Google Cloud AI Ecosystem: A DevOps Guide</a>
+        </div>
+        <div class="lesson-item">
+          <span class="lesson-num">Lesson 0004</span>
+          <a class="lesson-link" href="lessons/0004-fundamental-unit-tokens-tokenizers-context.html">The Fundamental Unit of AI: Tokens, Tokenizers & Context Limits</a>
+        </div>
+      </div>
+
+      <!-- Phase 2 -->
+      <div class="phase-section">
+        <div class="phase-title">Phase 2: Ingestion, Parsing & Chunking</div>
+        <div class="lesson-item">
+          <span class="lesson-num">Lesson 0005</span>
+          <a class="lesson-link" href="lessons/0005-document-ingestion-parsing-document-ai.html">Document Ingestion & Parsing with Cloud Document AI</a>
+        </div>
+        <div class="lesson-item">
+          <span class="lesson-num">Lesson 0006</span>
+          <a class="lesson-link" href="lessons/0006-chunking-architectures-boundary-strategies.html">Chunking Architectures & Boundary Strategies</a>
+        </div>
+      </div>
+
+      <!-- Phase 3 -->
+      <div class="phase-section">
+        <div class="phase-title">Phase 3: Embeddings & Vector Search on GCP</div>
+        <div class="lesson-item">
+          <span class="lesson-num">Lesson 0007</span>
+          <a class="lesson-link" href="lessons/0007-embeddings-demystified-vertex-ai.html">Embeddings Demystified with Vertex AI text-embedding-004</a>
+        </div>
+        <div class="lesson-item">
+          <span class="lesson-num">Lesson 0008</span>
+          <a class="lesson-link" href="lessons/0008-scalable-vector-indexing-hnsw-scann.html">Scalable Vector Indexing: HNSW vs. Google ScaNN</a>
+        </div>
+        <div class="lesson-item">
+          <span class="lesson-num">Lesson 0009</span>
+          <a class="lesson-link" href="lessons/0009-vertex-ai-vector-search-in-production.html">Vertex AI Vector Search in Production (Index Endpoints & Sizing)</a>
+        </div>
+        <div class="lesson-item">
+          <span class="lesson-num">Lesson 0010</span>
+          <a class="lesson-link" href="lessons/0010-bigquery-vector-search-vs-dedicated.html">BigQuery Vector Search vs. Dedicated Vector Search</a>
+        </div>
+      </div>
+
+      <!-- Phase 4 -->
+      <div class="phase-section">
+        <div class="phase-title">Phase 4: Retrieval, Re-Ranking & Prompt Assembly</div>
+        <div class="lesson-item">
+          <span class="lesson-num">Lesson 0011</span>
+          <a class="lesson-link" href="lessons/0011-retrieval-metadata-filtering-reranking.html">Retrieval, Metadata Filtering & Cross-Encoder Re-Ranking</a>
+        </div>
+        <div class="lesson-item">
+          <span class="lesson-num">Lesson 0012</span>
+          <a class="lesson-link" href="lessons/0012-prompt-augmentation-context-assembly-gemini.html">Prompt Augmentation, Context Assembly & Gemini on Vertex AI</a>
+        </div>
+      </div>
+
+      <!-- Phase 5 -->
+      <div class="phase-section">
+        <div class="phase-title">Phase 5: Knowledge Graph Pipeline Deep Dives</div>
+        <div class="lesson-item">
+          <span class="lesson-num">Lesson 0013</span>
+          <a class="lesson-link" href="lessons/0013-knowledge-graphs-property-graph-modeling.html">Knowledge Graphs & Property Graph Modeling</a>
+        </div>
+        <div class="lesson-item">
+          <span class="lesson-num">Lesson 0014</span>
+          <a class="lesson-link" href="lessons/0014-extracting-graphs-from-unstructured-text-gemini.html">Extracting Graphs from Unstructured Text with Gemini</a>
+        </div>
+        <div class="lesson-item">
+          <span class="lesson-num">Lesson 0015</span>
+          <a class="lesson-link" href="lessons/0015-entity-resolution-identity-disambiguation.html">Entity Resolution & Identity Disambiguation in Graph Data</a>
+        </div>
+        <div class="lesson-item">
+          <span class="lesson-num">Lesson 0016</span>
+          <a class="lesson-link" href="lessons/0016-neo4j-gcp-architecture-cypher-querying.html">Neo4j on GCP Architecture & Cypher Querying</a>
+        </div>
+        <div class="lesson-item">
+          <span class="lesson-num">Lesson 0017</span>
+          <a class="lesson-link" href="lessons/0017-graph-algorithms-financial-crime-intelligence.html">Graph Algorithms for Financial Crime Intelligence</a>
+        </div>
+      </div>
+
+      <!-- Phase 6 -->
+      <div class="phase-section">
+        <div class="phase-title">Phase 6: Hybrid Retrieval, GraphRAG & Enterprise Operations</div>
+        <div class="lesson-item">
+          <span class="lesson-num">Lesson 0018</span>
+          <a class="lesson-link" href="lessons/0018-graphrag-paradigm-local-vs-global.html">The GraphRAG Paradigm: Local vs. Global Retrieval</a>
+        </div>
+        <div class="lesson-item">
+          <span class="lesson-num">Lesson 0019</span>
+          <a class="lesson-link" href="lessons/0019-hybrid-query-routing-unified-retrieval.html">Hybrid Query Routing & Unified Retrieval Engine</a>
+        </div>
+        <div class="lesson-item">
+          <span class="lesson-num">Lesson 0020</span>
+          <a class="lesson-link" href="lessons/0020-production-gcp-architecture-security-compliance.html">Production GCP Architecture, Security & Compliance</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div><a href="MISSION.md">View Course Mission</a></div>
+    <div>learn_ai architecture workspace &bull; 20-Part Masterclass</div>
+  </footer>
+</body>
+</html>

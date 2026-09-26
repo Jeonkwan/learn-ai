@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 0014: Extracting Graphs from Unstructured Text with Gemini</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <style>
+    .extraction-flow {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin: 1.5rem 0;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="lesson-meta">Lesson 0014 &bull; Graph Extraction</div>
+    <h1>Extracting Graphs from Unstructured Text</h1>
+    <div class="subtitle">Using Gemini's structured JSON output mode to extract verifiable entity triples from investigative narratives.</div>
+  </header>
+
+  <main>
+    <p>A graph database is only as useful as the entities and edges inside it. In a bank, structured transactions already live in databases, but the most damning evidence—who actually controls the company, family ties, and side agreements—is buried in <strong>unstructured text</strong> (whistleblower emails, police tips, and investigator notes).</p>
+
+    <p>How do we automatically transform unstructured narrative paragraphs into clean, typed graph nodes and edges?</p>
+
+    <h2>The Knowledge Extraction Triple: (Subject, Predicate, Object)</h2>
+    <p>Every relationship in a knowledge graph can be represented as an RDF/Property <strong>Triple</strong>:</p>
+
+    <div class="extraction-flow">
+Raw Text: "Viktor Orlov registered BlueSky Trading in Cyprus and transferred $2M to Swiss Account 401."
+             │
+             ▼ (Information Extraction via LLM)
+Triple 1: (:Person {name: "Viktor Orlov"}) ──[:REGISTERED]──► (:Company {name: "BlueSky Trading", jurisdiction: "CY"})
+Triple 2: (:Company {name: "BlueSky Trading"}) ──[:TRANSFERRED {amount: 2000000, currency: "USD"}]──► (:Account {iban: "CH99401"})
+    </div>
+
+    <h2>Using Gemini 1.5 Structured Output (JSON Schema)</h2>
+    <p>If you ask an LLM in plain English: <em>"Extract the entities and relationships"</em>, it might return poetic bullet points or messy text that crashes your automated ingestion script.</p>
+
+    <p>In production pipelines on Vertex AI, we enforce <strong>Controlled Generation</strong> by passing a strict <code>response_schema</code>. This guarantees the model outputs valid, typed JSON matching our schema:</p>
+
+    <pre><code>curl -X POST \
+  -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+  -H "Content-Type: application/json" \
+  "https://us-central1-aiplatform.googleapis.com/v1/projects/${PROJECT_ID}/locations/us-central1/publishers/google/models/gemini-1.5-flash:generateContent" \
+  -d '{
+    "contents": [{
+      "role": "user",
+      "parts": [{ "text": "Extract entities and relationships from: Whistleblower reported that Sergei K. secretly controls Novatech via nominee Olga S." }]
+    }],
+    "generationConfig": {
+      "responseMimeType": "application/json",
+      "responseSchema": {
+        "type": "OBJECT",
+        "properties": {
+          "nodes": {
+            "type": "ARRAY",
+            "items": {
+              "type": "OBJECT",
+              "properties": {
+                "id": { "type": "STRING" },
+                "label": { "type": "STRING", "enum": ["Person", "Company", "Account"] },
+                "name": { "type": "STRING" }
+              },
+              "required": ["id", "label", "name"]
+            }
+          },
+          "edges": {
+            "type": "ARRAY",
+            "items": {
+              "type": "OBJECT",
+              "properties": {
+                "source_id": { "type": "STRING" },
+                "target_id": { "type": "STRING" },
+                "type": { "type": "STRING" }
+              },
+              "required": ["source_id", "target_id", "type"]
+            }
+          }
+        }
+      }
+    }
+  }'</code></pre>
+
+    <h2>Loading the Output into Neo4j via Cypher MERGE</h2>
+    <p>Once your Cloud Run ingestion worker receives the validated JSON payload, it converts the entities into idempotent Cypher statements using <code>MERGE</code> (which inserts the node if it doesn't exist, or updates it if it does):</p>
+
+    <pre><code>MERGE (p:Person {name: "Sergei K."})
+MERGE (c:Company {name: "Novatech"})
+MERGE (p)-[:BENEFICIAL_OWNER_OF]->(c);</code></pre>
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz-card">
+      <div class="quiz-badge">Retrieval Practice</div>
+      <div class="quiz-question">
+        Why is structured JSON schema enforcement critical when prompting LLMs for automated graph extraction?
+      </div>
+
+      <div class="quiz-options">
+        <button class="quiz-option-btn" onclick="checkAnswer(this, true)">
+          Guarantees deterministic entity payloads directly ingestible into graph database engines.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Bypasses token processing limits during high concurrency document parsing pipelines.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Encrypts extracted financial crime records using private cloud security perimeters.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Eliminates the requirement for generating high dimensional neural vector embeddings.
+        </button>
+      </div>
+
+      <div id="quiz-feedback" class="quiz-feedback"></div>
+    </div>
+
+    <h2>Primary Source Recommendation</h2>
+    <p>Read Google Cloud's guide on structured outputs:</p>
+    <p>&bull; <a href="https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/control-generated-output" target="_blank" rel="noopener"><strong>Control Generated Output with Response Schemas (Vertex AI)</strong></a>.<br>
+    <em>Learn how grammar-constrained decoding forces the LLM's token sampler to conform to your exact JSON schema without syntax errors.</em></p>
+
+    <div class="callout">
+      <div class="callout-title">Teacher Reminder</div>
+      What happens if Document A calls the suspect <em>"Sergei K."</em>, Document B calls him <em>"S. K. Ivanov"</em>, and Document C calls him <em>"Sergei Ivanov"</em>? Without resolution, your graph splits into three isolated islands! That brings us to Lesson 15: <strong>Entity Resolution & Identity Disambiguation in Graph Data</strong>.
+    </div>
+  </main>
+
+  <footer>
+    <div><a href="0013-knowledge-graphs-property-graph-modeling.html">&larr; Previous: Lesson 0013</a></div>
+    <div><a href="0015-entity-resolution-identity-disambiguation.html">Next: Lesson 0015 &rarr;</a></div>
+  </footer>
+
+  <script>
+    function checkAnswer(btn, isCorrect) {
+      const allButtons = document.querySelectorAll('.quiz-option-btn');
+      allButtons.forEach(b => {
+        b.disabled = true;
+        b.classList.remove('selected-correct', 'selected-incorrect');
+      });
+
+      const feedback = document.getElementById('quiz-feedback');
+      if (isCorrect) {
+        btn.classList.add('selected-correct');
+        feedback.className = 'quiz-feedback show-correct';
+        feedback.innerHTML = '<strong>Correct!</strong> Enforcing a JSON schema via Vertex AI constrained decoding guarantees that the model will return valid, parseable JSON with the exact node and edge keys your ingestion script expects, avoiding pipeline crashes.';
+      } else {
+        btn.classList.add('selected-incorrect');
+        feedback.className = 'quiz-feedback show-incorrect';
+        feedback.innerHTML = '<strong>Not quite.</strong> The primary benefit is schema determinism: grammar constraints prevent the model from returning conversational text or broken formatting, ensuring the output can be directly converted into Cypher MERGE commands.';
+      }
+    }
+  </script>
+</body>
+</html>

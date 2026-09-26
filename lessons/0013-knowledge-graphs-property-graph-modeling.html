@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 0013: Knowledge Graphs & Property Graph Modeling</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <style>
+    .graph-schema-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1.75rem 0;
+      font-family: var(--font-mono);
+      font-size: 0.88rem;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="lesson-meta">Lesson 0013 &bull; Knowledge Graph Foundations</div>
+    <h1>Knowledge Graphs & Property Graph Modeling</h1>
+    <div class="subtitle">Why relational SQL joins explode on multi-hop network paths, and how property graphs model financial crime.</div>
+  </header>
+
+  <main>
+    <p>In Phase 1–4, we built an enterprise vector pipeline. But as our initial lesson revealed, vectors cannot answer: <em>"Which shell companies share a nominee director with Sanctioned Trader X and wired funds to Account 9901?"</em></p>
+
+    <p>A natural reaction for a DevOps engineer is: <em>"Why not just put entities in PostgreSQL or BigQuery and use relational foreign keys?"</em> Let's examine why relational databases collapse under multi-hop relationship queries.</p>
+
+    <h2>The "Join Explosion" Problem in SQL</h2>
+    <p>In a relational database, relationships are not stored as physical connections; they are calculated dynamically at runtime by scanning primary/foreign key indexes across tables (<code>JOIN accounts ON ... JOIN transfers ON ... JOIN companies ON ...</code>).</p>
+
+    <ul>
+      <li><strong>1 Hop (Direct join):</strong> Fast ($O(\log N)$ with B-tree index).</li>
+      <li><strong>2 Hops:</strong> Acceptable.</li>
+      <li><strong>5 Hops:</strong> <strong>Catastrophic join explosion.</strong> If each entity has 20 relationships, traversing 5 hops requires evaluating $20^5 = 3,200,000$ join operations! The query planner grinds disk I/O to a halt.</li>
+    </ul>
+
+    <h2>The Graph Alternative: Index-Free Adjacency</h2>
+    <p>In a graph database like <strong>Neo4j</strong>, nodes physically store <strong>direct pointers in memory/disk</strong> to their neighboring nodes. Navigating an edge does not require scanning an index table—it simply dereferences a memory pointer in $O(1)$ time!</p>
+    <p>Whether the database contains 1,000 nodes or 10 billion nodes, traversing a 5-hop path takes microseconds because search time is proportional to the subgraph size, not the total table size.</p>
+
+    <h2>The Property Graph Data Model for AML</h2>
+    <p>The standard model in Neo4j is the <strong>Labeled Property Graph (LPG)</strong>:</p>
+
+    <div class="graph-schema-box">
+(:Person {id: "P_101", name: "Dmitri V.", nationality: "CY"})
+       │
+       │ [:BENEFICIAL_OWNER_OF {share_pct: 100, since: "2021-03"}]
+       ▼
+(:Company {id: "C_402", name: "Apex Maritime Ltd", jurisdiction: "BVI"})
+       │
+       │ [:HOLDS_ACCOUNT {status: "ACTIVE"}]
+       ▼
+(:Account {iban: "CY29X10029", balance_usd: 4500000})
+       │
+       │ [:TRANSFERRED {amount: 250000, date: "2024-08-14", currency: "USD"}]
+       ▼
+(:Account {iban: "GB88CHAS9901", is_frozen: true})
+    </div>
+
+    <h2>Designing Nodes vs. Edges vs. Properties</h2>
+    <p>When modeling financial crime data, follow these engineering guidelines:</p>
+    <ol style="margin-left: 1.5rem; margin-bottom: 1.25rem;">
+      <li><strong>Nodes = Nouns / Entities:</strong> Physical or legal actors with identity (<code>Person</code>, <code>Company</code>, <code>BankAccount</code>, <code>PhysicalAddress</code>).</li>
+      <li><strong>Edges = Verbs / Actions:</strong> Directed connections (<code>BENEFICIAL_OWNER_OF</code>, <code>TRANSFERRED</code>, <code>REGISTERED_AT</code>).</li>
+      <li><strong>Properties = Attributes:</strong> Key-value data that describes an entity or an action (e.g., transaction amount, timestamp, birth date).</li>
+    </ol>
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz-card">
+      <div class="quiz-badge">Retrieval Practice</div>
+      <div class="quiz-question">
+        Why do relational SQL databases suffer catastrophic performance degradation when executing 5-hop relationship queries?
+      </div>
+
+      <div class="quiz-options">
+        <button class="quiz-option-btn" onclick="checkAnswer(this, true)">
+          Executing recursive table joins causes exponential intermediate index lookups across disk.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Relational SQL databases lack storage capacity for high dimensional vector coordinates.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Relational SQL tables convert unstructured narrative reports into encrypted cryptographic tokens.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Relational database engines prohibit deploying dedicated private service connect virtual endpoints.
+        </button>
+      </div>
+
+      <div id="quiz-feedback" class="quiz-feedback"></div>
+    </div>
+
+    <h2>Primary Source Recommendation</h2>
+    <p>Read the definitive book on graph database architecture:</p>
+    <p>&bull; <a href="https://neo4j.com/graph-databases-book/" target="_blank" rel="noopener"><strong>Graph Databases</strong> — Robinson, Webber & Eifrem (O'Reilly Media)</a>.<br>
+    <em>Read Chapter 2 ("Comparing Graph and Relational Models") to see the mathematical and architectural explanation of Index-Free Adjacency.</em></p>
+
+    <div class="callout">
+      <div class="callout-title">Teacher Reminder</div>
+      Now we have a clean graph data model. But our raw evidence is still trapped in unstructured PDF memos and whistleblower emails! How do we extract entities and edges automatically using LLMs? That brings us to Lesson 14: <strong>Extracting Graphs from Unstructured Text (NER & Relation Extraction with Gemini)</strong>.
+    </div>
+  </main>
+
+  <footer>
+    <div><a href="0012-prompt-augmentation-context-assembly-gemini.html">&larr; Previous: Lesson 0012</a></div>
+    <div><a href="0014-extracting-graphs-from-unstructured-text-gemini.html">Next: Lesson 0014 &rarr;</a></div>
+  </footer>
+
+  <script>
+    function checkAnswer(btn, isCorrect) {
+      const allButtons = document.querySelectorAll('.quiz-option-btn');
+      allButtons.forEach(b => {
+        b.disabled = true;
+        b.classList.remove('selected-correct', 'selected-incorrect');
+      });
+
+      const feedback = document.getElementById('quiz-feedback');
+      if (isCorrect) {
+        btn.classList.add('selected-correct');
+        feedback.className = 'quiz-feedback show-correct';
+        feedback.innerHTML = '<strong>Correct!</strong> Relational databases must compute index joins across multiple tables repeatedly, resulting in an exponential Cartesian product search space. Graph databases use direct memory pointers (index-free adjacency), making hops microsecond-fast.';
+      } else {
+        btn.classList.add('selected-incorrect');
+        feedback.className = 'quiz-feedback show-incorrect';
+        feedback.innerHTML = '<strong>Not quite.</strong> The bottleneck in relational databases is relational join explosion: multi-hop queries force repeated index lookups across massive join tables, whereas graph databases traverse direct memory pointers in O(1) time per hop.';
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+name: Publish GitHub Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release tag (e.g. v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Determine tag name
+        id: vars
+        run: |
+          if [ -n "${{ github.event.inputs.tag_name }}" ]; then
+            echo "tag=${{ github.event.inputs.tag_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Package course archive
+        run: |
+          TAG="${{ steps.vars.outputs.tag }}"
+          ZIP_NAME="learn-ai-curriculum-${TAG}.zip"
+          zip -r "$ZIP_NAME" . -x "*.git*" ".github/*" ".DS_Store" "scripts/sync_to_icloud.sh"
+          echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.vars.outputs.tag }}
+          name: "Release ${{ steps.vars.outputs.tag }}"
+          body: |
+            ## Architecting Unstructured Data & Knowledge Retrieval for LLMs
+            Release **${{ steps.vars.outputs.tag }}** of the curriculum.
+
+            ### What's included:
+            - 20 complete interactive lessons across 6 phases
+            - 4 system reference & cheatsheet documents
+            - Dedicated mobile & tablet offline edition (`mobile/`)
+            - Visual architecture diagrams, code samples, and self-test quizzes
+            
+            Access the live interactive site on [GitHub Pages](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/).
+          files: ${{ env.ZIP_NAME }}
+          draft: false
+          prerelease: false

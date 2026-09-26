@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 0010: BigQuery Vector Search vs. Dedicated Vector Search</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <style>
+    .decision-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-family: var(--font-sans);
+      font-size: 0.88rem;
+    }
+    table th, table td {
+      border: 1px solid var(--border);
+      padding: 0.75rem 0.9rem;
+      text-align: left;
+    }
+    table th { background: var(--code-bg); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="lesson-meta">Lesson 0010 &bull; Architecture Decision Framework</div>
+    <h1>BigQuery Vector Search vs. Dedicated Vector Search</h1>
+    <div class="subtitle">When to query vectors directly inside your SQL warehouse, and when to provision dedicated Vertex AI endpoints.</div>
+  </header>
+
+  <main>
+    <p>A common mistake in cloud engineering is over-architecting: provisioning a dedicated 24/7 Vertex AI Vector Search cluster with multiple <code>e2-standard-16</code> VMs when you only need to run periodic compliance checks. In Google Cloud, you have an alternative: <strong>BigQuery Vector Search</strong>.</p>
+
+    <p>How do you choose between them for financial crime workloads?</p>
+
+    <h2>The Architectural Comparison</h2>
+
+    <table class="decision-table">
+      <thead>
+        <tr>
+          <th>Architectural Dimension</th>
+          <th>BigQuery Vector Search</th>
+          <th>Vertex AI Vector Search</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Query Latency</strong></td>
+          <td><strong>1 to 5 seconds</strong> (Analytical scale)</td>
+          <td><strong>Sub-5 milliseconds</strong> (Real-time operational)</td>
+        </tr>
+        <tr>
+          <td><strong>Pricing Model</strong></td>
+          <td>Serverless per-query scan cost ($/TB) or flat-rate slots</td>
+          <td>Hourly VM node hosting cost for the Index Endpoint</td>
+        </tr>
+        <tr>
+          <td><strong>Relational Joins</strong></td>
+          <td><strong>Native SQL:</strong> Joins vector matches directly with transaction tables and KYC risk scores.</td>
+          <td><strong>Limited:</strong> Vector similarity only; metadata filtering via JSON restricts.</td>
+        </tr>
+        <tr>
+          <td><strong>Best Used For</strong></td>
+          <td>Batch compliance audits, nightly SAR generation, historical analytical deep dives.</td>
+          <td>Real-time wire transaction screening, live investigator interactive search portals.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Running Vector Search Inside Standard SQL</h2>
+    <p>In BigQuery, you can store your 768-dimensional floats in an <code>ARRAY&lt;FLOAT64&gt;</code> column and create an index using <code>CREATE VECTOR INDEX</code>. Then, query it using the <code>VECTOR_SEARCH</code> function:</p>
+
+    <pre><code>-- Find the 10 past SAR reports most similar to an investigator's query,
+-- filtered only for high-risk corporate accounts in jurisdiction 'CY'
+SELECT
+  base.case_id,
+  base.narrative_text,
+  distance
+FROM VECTOR_SEARCH(
+  TABLE aml_dataset.sar_reports,
+  'embedding',
+  (SELECT embedding FROM aml_dataset.query_embeddings WHERE query_id = 'q_101'),
+  top_k => 10,
+  distance_type => 'COSINE',
+  options => '{"fraction_lists_to_search": 0.05}'
+)
+JOIN aml_dataset.accounts ON base.account_id = accounts.id
+WHERE accounts.jurisdiction = 'CY' AND accounts.risk_tier = 'HIGH';</code></pre>
+
+    <div class="callout tip">
+      <div class="callout-title">The Power of SQL Filtering</div>
+      Notice how easily BigQuery combines vector similarity with a standard SQL <code>JOIN</code> and <code>WHERE</code> clause. In dedicated vector databases, doing complex relational joins requires awkward multi-step application glue code.
+    </div>
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz-card">
+      <div class="quiz-badge">Retrieval Practice</div>
+      <div class="quiz-question">
+        An engineering team must execute a nightly batch compliance job analyzing 500,000 transactions joined with customer risk tables. Which architecture is most optimal?
+      </div>
+
+      <div class="quiz-options">
+        <button class="quiz-option-btn" onclick="checkAnswer(this, true)">
+          BigQuery vector search avoids maintaining dedicated continuously running compute clusters.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Vertex AI dedicated endpoints eliminate storage costs inside data warehouses.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Cloud Storage bucket notifications trigger individual document parser executions synchronously.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Document AI processors convert relational database tables into operational graphs.
+        </button>
+      </div>
+
+      <div id="quiz-feedback" class="quiz-feedback"></div>
+    </div>
+
+    <h2>Primary Source Recommendation</h2>
+    <p>Read Google Cloud's official BigQuery Vector Search guide:</p>
+    <p>&bull; <a href="https://cloud.google.com/bigquery/docs/vector-search-intro" target="_blank" rel="noopener"><strong>Introduction to BigQuery Vector Search</strong></a>.<br>
+    <em>Examine how the <code>IVF</code> (Inverted File) vector index type is defined and tuned inside BigQuery DDL statements.</em></p>
+
+    <div class="callout">
+      <div class="callout-title">Teacher Reminder</div>
+      Now we know how to store and search vectors at scale on GCP. But vector search alone returns noisy false positives. How do we filter and re-rank results to extract the pure gold? Find out in Lesson 11: <strong>Retrieval, Metadata Filtering & Cross-Encoder Re-Ranking</strong>.
+    </div>
+  </main>
+
+  <footer>
+    <div><a href="0009-vertex-ai-vector-search-in-production.html">&larr; Previous: Lesson 0009</a></div>
+    <div><a href="0011-retrieval-metadata-filtering-reranking.html">Next: Lesson 0011 &rarr;</a></div>
+  </footer>
+
+  <script>
+    function checkAnswer(btn, isCorrect) {
+      const allButtons = document.querySelectorAll('.quiz-option-btn');
+      allButtons.forEach(b => {
+        b.disabled = true;
+        b.classList.remove('selected-correct', 'selected-incorrect');
+      });
+
+      const feedback = document.getElementById('quiz-feedback');
+      if (isCorrect) {
+        btn.classList.add('selected-correct');
+        feedback.className = 'quiz-feedback show-correct';
+        feedback.innerHTML = '<strong>Correct!</strong> For scheduled, batch analytical jobs that join vectors with relational business tables, BigQuery Vector Search is serverless and cost-effective—you pay only for the query scan without paying for idle VMs.';
+      } else {
+        btn.classList.add('selected-incorrect');
+        feedback.className = 'quiz-feedback show-incorrect';
+        feedback.innerHTML = '<strong>Not quite.</strong> For nightly batch workloads needing SQL joins against business tables, BigQuery Vector Search is far more cost-effective because it is serverless and avoids paying for 24/7 dedicated hosting.';
+      }
+    }
+  </script>
+</body>
+</html>

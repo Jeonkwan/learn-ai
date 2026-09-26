@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 0009: Vertex AI Vector Search in Production</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <style>
+    .hierarchy-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin: 1.75rem 0;
+      font-family: var(--font-mono);
+      font-size: 0.88rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="lesson-meta">Lesson 0009 &bull; Production Infrastructure</div>
+    <h1>Vertex AI Vector Search in Production</h1>
+    <div class="subtitle">A DevOps guide to Indexes, Endpoints, Streaming updates, and VPC Peering.</div>
+  </header>
+
+  <main>
+    <p>Now that we understand how ScaNN indexes high-dimensional vectors, how do you actually deploy, operate, and maintain this in Google Cloud? For a DevOps engineer, Vertex AI Vector Search introduces a distinct 3-tier architectural hierarchy.</p>
+
+    <h2>The 3-Tier Resource Hierarchy</h2>
+
+    <div class="hierarchy-box">
+[Tier 1: Cold Storage Data]
+ Cloud Storage Bucket (gs://aml-embeddings/data.jsonl)
+ &bull; Stores raw JSONL records: {"id": "chunk_042", "embedding": [...], "restricts": [...]}
+         │
+         ▼ (Trigger Index Build via gcloud / API)
+[Tier 2: The Compiled Index]
+ Vertex AI Index (projects/123/locations/us-central1/indexes/456)
+ &bull; The compiled ScaNN binary data structure (cannot serve queries directly)
+         │
+         ▼ (Deploy to Serving Cluster)
+[Tier 3: The Live Serving Cluster]
+ Vertex AI Index Endpoint (projects/123/locations/us-central1/indexEndpoints/789)
+ &bull; Hosts the DeployedIndex on managed GCE nodes (e.g., e2-standard-16)
+ &bull; Serves live sub-5ms queries over Private Service Connect (PSC) or VPC Peering
+    </div>
+
+    <h2>Batch Updates vs. Streaming Updates</h2>
+    <p>When creating a Vector Search index in GCP, you must choose the update mode up front:</p>
+
+    <ul>
+      <li><strong>Batch Update (Static Index):</strong> You dump files to Cloud Storage and trigger an index build. Best for historical case backfills. Rebuilding an index of 10M items takes 30–60 minutes, but produces the highest query throughput and lowest storage cost.</li>
+      <li><strong>Streaming Update (Dynamic Index):</strong> Allows inserting, updating, or deleting individual vectors via a real-time API in milliseconds. Essential for live AML monitoring systems where new incoming wire transfers must be searchable immediately.</li>
+    </ul>
+
+    <h2>Production Networking: Keeping Banking Data Private</h2>
+    <p>Financial crime and banking data must never traverse the public internet. Vertex AI Vector Search provides two enterprise networking modes:</p>
+    <ol style="margin-left: 1.5rem; margin-bottom: 1.25rem;">
+      <li><strong>VPC Network Peering:</strong> Direct peering between your organization's custom VPC and Google's internal service network.</li>
+      <li><strong>Private Service Connect (PSC):</strong> Exposes the Vector Search endpoint as a private IP address (forwarding rule) inside your own subnet. This is the modern GCP best practice because it eliminates IP address overlap conflicts.</li>
+    </ol>
+
+    <h2>DevOps Sizing & Deployment Command</h2>
+    <p>Deploying a compiled index to an endpoint using the <code>gcloud</code> CLI:</p>
+
+    <pre><code>gcloud ai index-endpoints deploy-index ENDPOINT_ID \
+  --region=us-central1 \
+  --index=INDEX_ID \
+  --deployed-index-id=aml_cases_deployed_v1 \
+  --display-name="AML Case Narrative Index" \
+  --min-replica-count=2 \
+  --max-replica-count=5 \
+  --machine-type=e2-standard-16</code></pre>
+
+    <div class="callout tip">
+      <div class="callout-title">High Availability Rule</div>
+      Always set <code>--min-replica-count=2</code> in production. Google Cloud automatically distributes replicas across separate availability zones to guarantee continuous uptime during platform maintenance.
+    </div>
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz-card">
+      <div class="quiz-badge">Retrieval Practice</div>
+      <div class="quiz-question">
+        In Vertex AI Vector Search, why can an Index resource not be queried directly without first deploying it to an Index Endpoint?
+      </div>
+
+      <div class="quiz-options">
+        <button class="quiz-option-btn" onclick="checkAnswer(this, true)">
+          Index resources represent compiled storage artifacts requiring dedicated compute cluster hosting.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Index resources contain unencrypted banking records that violate cloud provider compliance rules.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Index resources lack mathematical floating point coordinates until deployed to regional instances.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Index resources only operate through analytical BigQuery data warehouse batch processing pipelines.
+        </button>
+      </div>
+
+      <div id="quiz-feedback" class="quiz-feedback"></div>
+    </div>
+
+    <h2>Primary Source Recommendation</h2>
+    <p>Read Google Cloud's deployment guide:</p>
+    <p>&bull; <a href="https://cloud.google.com/vertex-ai/docs/vector-search/deploy-index-public" target="_blank" rel="noopener"><strong>Deploy an Index to an Endpoint (Vertex AI Vector Search)</strong></a>.<br>
+    <em>Review the trade-offs between dedicated machine types and automatic replica scaling.</em></p>
+
+    <div class="callout">
+      <div class="callout-title">Teacher Reminder</div>
+      Do you always need a dedicated Vector Search cluster, or can you use BigQuery? In Lesson 10, we compare: <strong>BigQuery Vector Search vs. Dedicated Vector Search</strong>.
+    </div>
+  </main>
+
+  <footer>
+    <div><a href="0008-scalable-vector-indexing-hnsw-scann.html">&larr; Previous: Lesson 0008</a></div>
+    <div><a href="0010-bigquery-vector-search-vs-dedicated.html">Next: Lesson 0010 &rarr;</a></div>
+  </footer>
+
+  <script>
+    function checkAnswer(btn, isCorrect) {
+      const allButtons = document.querySelectorAll('.quiz-option-btn');
+      allButtons.forEach(b => {
+        b.disabled = true;
+        b.classList.remove('selected-correct', 'selected-incorrect');
+      });
+
+      const feedback = document.getElementById('quiz-feedback');
+      if (isCorrect) {
+        btn.classList.add('selected-correct');
+        feedback.className = 'quiz-feedback show-correct';
+        feedback.innerHTML = '<strong>Correct!</strong> An Index in Vertex AI is an immutable data artifact compiled from vectors. It needs an Index Endpoint to provision the actual RAM, CPU, and networking endpoints that serve incoming queries.';
+      } else {
+        btn.classList.add('selected-incorrect');
+        feedback.className = 'quiz-feedback show-incorrect';
+        feedback.innerHTML = '<strong>Not quite.</strong> The Index is just the compiled data structure in cloud storage; the Index Endpoint is the running server fleet (GCE VMs) that loads the index into memory to respond to queries.';
+      }
+    }
+  </script>
+</body>
+</html>

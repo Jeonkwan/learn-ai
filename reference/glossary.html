@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reference: Core Nomenclature & Glossary</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <style>
+    dl.glossary-list {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      row-gap: 1.5rem;
+      column-gap: 1.5rem;
+      margin: 2rem 0;
+    }
+    dt {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--accent-dark);
+      font-size: 0.95rem;
+    }
+    dd {
+      font-size: 1rem;
+      color: var(--text);
+    }
+    @media (max-width: 600px) {
+      dl.glossary-list {
+        grid-template-columns: 1fr;
+        row-gap: 0.75rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="lesson-meta">Architecture Reference Document #01</div>
+    <h1>Unstructured Data & AI Retrieval Glossary</h1>
+    <div class="subtitle">Standardized terminology for vector pipelines, knowledge graphs, and hybrid retrieval.</div>
+  </header>
+
+  <main>
+    <p>This glossary provides the exact operational definitions used throughout our architecture sessions. Grounded in both enterprise cloud deployment and financial crime investigation workflows.</p>
+
+    <dl class="glossary-list">
+      <dt>Unstructured Data</dt>
+      <dd>Information that does not adhere to a predefined data model or relational schema. Includes free-text investigative notes, suspicious activity reports (SARs), scanned PDF disclosures, and email transcripts.</dd>
+
+      <dt>Chunking</dt>
+      <dd>The deterministic process of splitting long documents into discrete, semantically coherent passages (e.g., 500 tokens with 50-token overlap) suitable for embedding models and LLM context windows.</dd>
+
+      <dt>Embedding</dt>
+      <dd>A dense mathematical vector (e.g., 768 or 1536 floating-point numbers) produced by a neural encoder that maps semantic meaning into high-dimensional geometric space.</dd>
+
+      <dt>Cosine Similarity</dt>
+      <dd>A metric measuring the angle between two embedding vectors in multidimensional space. Used to calculate how semantically similar a user query is to an indexed text chunk.</dd>
+
+      <dt>ANN Search</dt>
+      <dd>Approximate Nearest Neighbor search. Fast algorithmic indexing (such as HNSW or ScaNN) designed to retrieve the top-k closest vectors in sub-linear time at enterprise scale.</dd>
+
+      <dt>Vector Database</dt>
+      <dd>A specialized storage engine (e.g., Vertex AI Vector Search, Qdrant, Pinecone) optimized for indexing, updating, and querying high-dimensional vectors with metadata filtering.</dd>
+
+      <dt>RAG</dt>
+      <dd>Retrieval-Augmented Generation. An architecture that dynamically retrieves external domain facts matching a query and injects them into the LLM's prompt context prior to answer generation.</dd>
+
+      <dt>Property Graph</dt>
+      <dd>A graph model where entities are <em>Nodes</em> (with labels and key-value properties) and relationships are directed <em>Edges</em> (also with types and properties). Standard in Neo4j.</dd>
+
+      <dt>Cypher</dt>
+      <dd>The declarative query language used by Neo4j and OpenCypher to express graph patterns, entity traversals, and multi-hop relationship pathfinding.</dd>
+
+      <dt>Knowledge Graph (KG)</dt>
+      <dd>A structured network of real-world entities (persons, shell companies, bank accounts) and their explicit relationships (OWNED_BY, TRANSFERRED_TO), serving as a deterministic ground truth.</dd>
+
+      <dt>GraphRAG</dt>
+      <dd>An advanced retrieval paradigm combining knowledge graph traversal (for relational context and multi-hop reasoning) with vector similarity (for narrative nuances) to answer complex queries.</dd>
+    </dl>
+  </main>
+
+  <footer>
+    <div><a href="../lessons/0001-unstructured-data-vectors-vs-graphs.html">&larr; Back to Lesson 0001</a></div>
+    <div>learn_ai architecture workspace</div>
+  </footer>
+</body>
+</html>

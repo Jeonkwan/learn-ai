@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 0003: The Google Cloud AI Ecosystem — A DevOps Guide</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <style>
+    .service-card-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      margin: 2rem 0;
+    }
+    .service-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.2rem;
+    }
+    .service-badge {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #1a73e8;
+      background: #e8f0fe;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      margin-bottom: 0.5rem;
+    }
+    .infra-diagram {
+      background: #f6f8fa;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin: 1.75rem 0;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      line-height: 1.45;
+      overflow-x: auto;
+    }
+    @media (max-width: 650px) {
+      .service-card-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="lesson-meta">Lesson 0003 &bull; GCP AI Foundations</div>
+    <h1>The Google Cloud AI Ecosystem</h1>
+    <div class="subtitle">A DevOps map of Vertex AI, Document AI, and BigQuery Vector Search.</div>
+  </header>
+
+  <main>
+    <p>As a DevOps engineer managing Google Cloud Platform (GCP), you already understand VPCs, Cloud Storage (GCS), GKE clusters, and IAM policies. But when product teams ask for "AI search over banking documents," you are suddenly confronted with a flurry of Google brand names: <em>Vertex AI, Document AI, Model Garden, Vector Search, Matching Engine, and Gemini</em>.</p>
+
+    <p>This lesson cuts through the marketing and gives you an exact architectural map of Google's AI services, how they communicate, and how they map to infrastructure you already know.</p>
+
+    <h2>The Three Functional Layers of GCP AI</h2>
+
+    <div class="infra-diagram">
+┌────────────────────────────────────────────────────────────────────────┐
+│                        1. INGESTION & PARSING                          │
+│  [Cloud Storage Bucket] ──► [Cloud Document AI Processors]             │
+│  Raw PDFs, wire scans, trade docs &rarr; Clean UTF-8 text & nested JSON tables │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+┌───────────────────────────────────▼────────────────────────────────────┐
+│                    2. EMBEDDINGS & VECTOR STORAGE                      │
+│  [Vertex AI Model Garden] (text-embedding-004) ──► Float32 Coordinates │
+│                                   │                                    │
+│         ┌─────────────────────────┴────────────────────────┐           │
+│         ▼                                                  ▼           │
+│  [Vertex AI Vector Search]                       [BigQuery Vector]     │
+│  Dedicated low-latency ScaNN cluster             SQL-native analytics  │
+│  Sub-5ms p99 SLA for live APIs                   Batch analytical jobs │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+┌───────────────────────────────────▼────────────────────────────────────┐
+│                    3. GENERATION & REASONING                           │
+│  [Vertex AI Gemini 1.5 API] (Flash / Pro)                              │
+│  Receives retrieved evidence chunks & generates SAR analysis report    │
+└────────────────────────────────────────────────────────────────────────┘
+    </div>
+
+    <h2>Deconstructing the GCP AI Portfolio</h2>
+
+    <div class="service-card-grid">
+      <div class="service-card">
+        <span class="service-badge">Document AI</span>
+        <h3>Cloud Document AI</h3>
+        <p><strong>DevOps Analogy:</strong> A specialized serverless OCR and computer vision microservice.</p>
+        <p><strong>Role:</strong> Turns messy scanned PDFs, customs invoices, and bank statements into machine-readable text while keeping table structures intact.</p>
+        <p><strong>Key Resource:</strong> Processors (e.g., <code>OCR_PROCESSOR</code>, <code>FORM_PARSER_v2</code>).</p>
+      </div>
+
+      <div class="service-card">
+        <span class="service-badge">Foundation Models</span>
+        <h3>Vertex AI Model Garden</h3>
+        <p><strong>DevOps Analogy:</strong> A managed model registry and API gateway (like Artifact Registry for neural networks).</p>
+        <p><strong>Role:</strong> Exposes managed endpoints for Google's models (Gemini 1.5 Pro, Gemini 1.5 Flash) and embedding models (<code>text-embedding-004</code>) via REST and gRPC.</p>
+      </div>
+
+      <div class="service-card">
+        <span class="service-badge">Vector DB</span>
+        <h3>Vertex AI Vector Search</h3>
+        <p><strong>DevOps Analogy:</strong> A distributed, in-memory spatial index cluster (formerly called Matching Engine).</p>
+        <p><strong>Role:</strong> Hosts multi-million vector datasets on dedicated Google infrastructure, executing Approximate Nearest Neighbor (ANN) search with sub-5ms latency.</p>
+      </div>
+
+      <div class="service-card">
+        <span class="service-badge">Data Warehouse</span>
+        <h3>BigQuery Vector Search</h3>
+        <p><strong>DevOps Analogy:</strong> Adding spatial index functions directly into your existing SQL analytical warehouse.</p>
+        <p><strong>Role:</strong> Lets you run cosine similarity searches directly inside standard SQL queries using <code>VECTOR_SEARCH()</code> without moving data out of BigQuery.</p>
+      </div>
+    </div>
+
+    <h2>IAM & Security: How Services Authenticate</h2>
+    <p>In GCP, your workload identity or Cloud Run service account needs precise permissions to interact with these AI services. Avoid blanket <code>Editor</code> or <code>Owner</code> roles:</p>
+
+    <ul>
+      <li><code>roles/documentai.apiUser</code>: Allows a service account to send documents to Document AI processors.</li>
+      <li><code>roles/aiplatform.user</code>: Allows invoking Vertex AI models (Gemini and text-embedding) and querying Vector Search endpoints.</li>
+      <li><code>roles/storage.objectViewer</code>: Grants read access to raw PDFs in your ingestion GCS bucket.</li>
+    </ul>
+
+    <div class="callout tip">
+      <div class="callout-title">DevOps Command-Line Check</div>
+      You can inspect available Vertex AI foundation models directly from the command line using your existing <code>gcloud</code> SDK:
+      <pre><code>gcloud ai models list --project=$PROJECT_ID --region=us-central1</code></pre>
+    </div>
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz-card">
+      <div class="quiz-badge">Retrieval Practice</div>
+      <div class="quiz-question">
+        A financial fraud API requires sub-5 millisecond vector lookups under 2,000 queries per second. Which GCP service architecture should the DevOps engineer deploy?
+      </div>
+
+      <div class="quiz-options">
+        <button class="quiz-option-btn" onclick="checkAnswer(this, true)">
+          Vertex AI Vector Search deployed on dedicated private endpoints.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          BigQuery scheduled query executing standard batch SQL vector functions.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Cloud Storage bucket triggering serverless asynchronous Cloud Run functions.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Document AI processor parsing scanned files through batch processing.
+        </button>
+      </div>
+
+      <div id="quiz-feedback" class="quiz-feedback"></div>
+    </div>
+
+    <h2>Primary Source Recommendation</h2>
+    <p>Read the official Google Cloud architectural whitepaper:</p>
+    <p>&bull; <a href="https://cloud.google.com/vertex-ai/docs/vector-search/overview" target="_blank" rel="noopener"><strong>Google Cloud Vertex AI Vector Search Architecture Overview</strong></a>.<br>
+    <em>Pay close attention to the distinction between an Index (the static data artifact built from GCS) and an Index Endpoint (the live autoscaling serving cluster).</em></p>
+
+    <div class="callout">
+      <div class="callout-title">Teacher Reminder</div>
+      Now that we have mapped the cloud portfolio, we will zoom into the smallest fundamental building block of all language models in Lesson 4: <strong>Tokens, Tokenizers & Context Windows</strong>.
+    </div>
+  </main>
+
+  <footer>
+    <div><a href="0002-vector-pipeline-chunking-embeddings-ann.html">&larr; Previous: Lesson 0002</a></div>
+    <div><a href="../reference/gcp-ai-products-cheatsheet.html">GCP Cheat Sheet</a> &bull; <a href="0004-fundamental-unit-tokens-tokenizers-context.html">Next: Lesson 0004 &rarr;</a></div>
+  </footer>
+
+  <script>
+    function checkAnswer(btn, isCorrect) {
+      const allButtons = document.querySelectorAll('.quiz-option-btn');
+      allButtons.forEach(b => {
+        b.disabled = true;
+        b.classList.remove('selected-correct', 'selected-incorrect');
+      });
+
+      const feedback = document.getElementById('quiz-feedback');
+      if (isCorrect) {
+        btn.classList.add('selected-correct');
+        feedback.className = 'quiz-feedback show-correct';
+        feedback.innerHTML = '<strong>Correct!</strong> Vertex AI Vector Search is purpose-built for low-latency, high-QPS production serving (sub-5ms SLA). BigQuery Vector Search is designed for analytical SQL batches, not sub-5ms real-time API transactions.';
+      } else {
+        btn.classList.add('selected-incorrect');
+        feedback.className = 'quiz-feedback show-incorrect';
+        feedback.innerHTML = '<strong>Not quite.</strong> For real-time APIs needing sub-5ms p99 at thousands of QPS, Vertex AI Vector Search is the dedicated serving engine. BigQuery is optimized for analytical batch SQL, and Cloud Storage is cold object storage.';
+      }
+    }
+  </script>
+</body>
+</html>

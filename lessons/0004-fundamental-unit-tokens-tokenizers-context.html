@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 0004: The Fundamental Unit — Tokens, Tokenizers & Context Limits</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <style>
+    .token-viz {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1.75rem 0;
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      line-height: 1.8;
+    }
+    .tok-1 { background-color: #ffd8d8; padding: 2px 5px; border-radius: 4px; margin: 0 1px; }
+    .tok-2 { background-color: #d8ecff; padding: 2px 5px; border-radius: 4px; margin: 0 1px; }
+    .tok-3 { background-color: #d8ffd8; padding: 2px 5px; border-radius: 4px; margin: 0 1px; }
+    .tok-4 { background-color: #fff3d8; padding: 2px 5px; border-radius: 4px; margin: 0 1px; }
+    .tok-5 { background-color: #ebd8ff; padding: 2px 5px; border-radius: 4px; margin: 0 1px; }
+    .tok-id {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      display: block;
+      margin-top: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="lesson-meta">Lesson 0004 &bull; Core Foundations</div>
+    <h1>The Fundamental Unit of AI</h1>
+    <div class="subtitle">Why LLMs do not read strings, how Byte-Pair Encoding works, and computing context costs on GCP.</div>
+  </header>
+
+  <main>
+    <p>In software engineering and Linux systems, text is represented as raw bytes or UTF-8 strings. When you run <code>cat file.txt | wc -c</code>, you are counting ASCII or Unicode bytes. But when working with LLMs on Google Cloud, you will immediately notice that all pricing, latency, and context limits are measured in <strong>Tokens</strong>.</p>
+
+    <p>What is a token, why does AI use them, and why does this matter for a DevOps engineer sizing cloud pipelines?</p>
+
+    <h2>Why Can't Neural Networks Read Strings Directly?</h2>
+    <p>Computers do not do math on letters. A CPU or GPU executing matrix multiplications requires numbers. There are two naive approaches to converting text to numbers, both of which fail:</p>
+
+    <ul>
+      <li><strong>Naive Approach 1: Character-by-Character (ASCII IDs).</strong> Treat every character as an integer (e.g., 'A'=65).<br>
+      <em>Why it fails:</em> A 50-page SAR report would be 150,000 individual characters long. The neural network would spend massive compute simply trying to figure out that 's-u-s-p-i-c-i-o-u-s' forms a single word.</li>
+      <li><strong>Naive Approach 2: Whole Words.</strong> Give every unique word in the English language a unique integer ID.<br>
+      <em>Why it fails:</em> The vocabulary dictionary would be infinite. What happens when a suspect misspells a name, or when an account number like <code>ACC_98012489</code> appears? The model would throw an "Out of Vocabulary" error.</li>
+    </ul>
+
+    <h2>The Engineering Solution: Byte-Pair Encoding (BPE)</h2>
+    <p>Modern LLMs use <strong>Sub-word Tokenization</strong> (most commonly Byte-Pair Encoding). Think of BPE like a dynamic compression algorithm (similar to gzip or Huffman coding):</p>
+    <ol style="margin-left: 1.5rem; margin-bottom: 1.25rem;">
+      <li>Frequently used words become a <em>single token</em> (e.g., <code>"transferred"</code> &rarr; Token <code>#19421</code>).</li>
+      <li>Rare words, SWIFT codes, or account numbers are broken into <em>sub-word chunks</em> (e.g., <code>"Smurfing"</code> &rarr; <code>"Sm"</code> + <code>"urfing"</code>).</li>
+      <li>Unseen characters gracefully fall back to raw byte tokens.</li>
+    </ol>
+
+    <div class="token-viz">
+      <strong>Visualizing Tokenization of a Financial Crime Record:</strong><br><br>
+      <span class="tok-1">Wire</span>
+      <span class="tok-2"> transfer</span>
+      <span class="tok-3"> of</span>
+      <span class="tok-4"> $</span>
+      <span class="tok-5">9</span>
+      <span class="tok-1">,</span>
+      <span class="tok-2">850</span>
+      <span class="tok-3"> routed</span>
+      <span class="tok-4"> through</span>
+      <span class="tok-5"> SW</span>
+      <span class="tok-1">IFT</span>
+      <span class="tok-2"> code</span>
+      <span class="tok-3"> CH</span>
+      <span class="tok-4">AS</span>
+      <span class="tok-5">US</span>
+      <span class="tok-1">33</span>
+      <span class="tok-2">.</span>
+      <div class="tok-id">Sentence: 56 characters &bull; 10 words &bull; <strong>17 tokens</strong></div>
+    </div>
+
+    <div class="callout warning">
+      <div class="callout-title">DevOps Pitfall: Numbers and Code Explode Token Counts</div>
+      Notice how <code>$9,850</code> and <code>CHASUS33</code> fractured into multiple tokens. In banking data, tabular account numbers, timestamps, and hashes consume 2x to 3x more tokens than plain English sentences!
+    </div>
+
+    <h2>Rule of Thumb for Capacity Planning</h2>
+    <p>When budgeting GCP Vertex AI costs and estimating prompt limits:</p>
+    <ul>
+      <li><strong>1 token &asymp; 4 characters of English text</strong> (or roughly 0.75 words).</li>
+      <li><strong>1,000 tokens &asymp; 750 words</strong> (about 2 single-spaced pages of an AML report).</li>
+      <li><strong>1 million tokens &asymp; 750,000 words</strong> (roughly 1,500 pages of text).</li>
+    </ul>
+
+    <h2>Measuring Tokens via the Vertex AI API</h2>
+    <p>Before sending a 50MB payload to Gemini 1.5, DevOps pipelines should call the lightweight, free <code>countTokens</code> API to verify it fits within SLA limits:</p>
+
+    <pre><code>curl -X POST \
+  -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+  -H "Content-Type: application/json" \
+  "https://us-central1-aiplatform.googleapis.com/v1/projects/${PROJECT_ID}/locations/us-central1/publishers/google/models/gemini-1.5-flash:countTokens" \
+  -d '{
+    "contents": [{
+      "role": "user",
+      "parts": [{ "text": "Investigate wire transfer TX-90214 to shell corp." }]
+    }]
+  }'</code></pre>
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz-card">
+      <div class="quiz-badge">Retrieval Practice</div>
+      <div class="quiz-question">
+        Why do modern LLM pipelines use Byte-Pair Encoding tokenization rather than treating words as atomic units?
+      </div>
+
+      <div class="quiz-options">
+        <button class="quiz-option-btn" onclick="checkAnswer(this, true)">
+          BPE handles arbitrary unseen strings while maintaining compact vocabulary dictionaries.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          BPE completely eliminates numerical calculation requirements across all neural networks.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          BPE encrypts sensitive customer banking information directly inside high-dimensional spaces.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          BPE guarantees identical processing latency regardless of input document lengths.
+        </button>
+      </div>
+
+      <div id="quiz-feedback" class="quiz-feedback"></div>
+    </div>
+
+    <h2>Primary Source Recommendation</h2>
+    <p>Read the seminal paper on subword tokenization:</p>
+    <p>&bull; <a href="https://arxiv.org/abs/1508.07909" target="_blank" rel="noopener"><strong>Neural Machine Translation of Rare Words with Subword Units</strong> — Sennrich et al. (ACL 2016)</a>.<br>
+    <em>This paper introduced BPE to neural NLP, explaining how sub-word segmentation solves the out-of-vocabulary dilemma with finite vocabulary tables.</em></p>
+
+    <div class="callout">
+      <div class="callout-title">Teacher Reminder</div>
+      Now that we understand tokens as the atomic unit of language models, how do we get raw, messy PDFs and scanned bank ledgers converted into clean tokens without losing table structure? Find out in Lesson 5: <strong>Document Ingestion & Parsing with Cloud Document AI</strong>.
+    </div>
+  </main>
+
+  <footer>
+    <div><a href="0003-gcp-ai-ecosystem-devops-guide.html">&larr; Previous: Lesson 0003</a></div>
+    <div><a href="0005-document-ingestion-parsing-document-ai.html">Next: Lesson 0005 &rarr;</a></div>
+  </footer>
+
+  <script>
+    function checkAnswer(btn, isCorrect) {
+      const allButtons = document.querySelectorAll('.quiz-option-btn');
+      allButtons.forEach(b => {
+        b.disabled = true;
+        b.classList.remove('selected-correct', 'selected-incorrect');
+      });
+
+      const feedback = document.getElementById('quiz-feedback');
+      if (isCorrect) {
+        btn.classList.add('selected-correct');
+        feedback.className = 'quiz-feedback show-correct';
+        feedback.innerHTML = '<strong>Correct!</strong> Subword BPE allows the model to handle rare words, account numbers, and typos by breaking them into familiar sub-word fragments, without needing an infinite vocabulary list.';
+      } else {
+        btn.classList.add('selected-incorrect');
+        feedback.className = 'quiz-feedback show-incorrect';
+        feedback.innerHTML = '<strong>Not quite.</strong> The main engineering benefit of BPE is handling rare or unseen words (like account numbers or foreign names) by decomposing them into subword pieces while maintaining a manageable dictionary size (~32k–100k tokens).';
+      }
+    }
+  </script>
+</body>
+</html>

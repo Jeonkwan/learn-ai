@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Lesson 0009: Vertex AI Vector Search in Production</title>
+  <style>
+
+:root {
+  --bg: #faf9f5;
+  --surface: #ffffff;
+  --text: #1d1d1f;
+  --text-muted: #6e6e73;
+  --border: #e5e5ea;
+  --accent: #0071e3;
+  --accent-light: #e8f2ff;
+  --accent-dark: #0056b3;
+  --success-bg: #eaf8ee;
+  --success-text: #1e7e34;
+  --danger-bg: #fdeeee;
+  --danger-text: #d93025;
+  --code-bg: #f2f2f7;
+  --code-border: #e5e5ea;
+  --font-serif: -apple-system-ui-serif, "Charter", "New York", Palatino, serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #000000;
+    --surface: #1c1c1e;
+    --text: #f2f2f7;
+    --text-muted: #8e8e93;
+    --border: #2c2c2e;
+    --accent: #2997ff;
+    --accent-light: #152942;
+    --accent-dark: #58a6ff;
+    --success-bg: #142e1b;
+    --success-text: #34c759;
+    --danger-bg: #321617;
+    --danger-text: #ff453a;
+    --code-bg: #1c1c1e;
+    --code-border: #38383a;
+  }
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-serif);
+  font-size: clamp(16px, 3.8vw, 18px);
+  line-height: 1.65;
+  padding: 1rem 1rem 5.5rem;
+  max-width: 680px;
+  margin: 0 auto;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (min-width: 768px) {
+  body {
+    max-width: 760px;
+    padding: 2rem 2rem 6.5rem;
+  }
+}
+
+.mobile-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.mobile-top-bar a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.lesson-meta {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+}
+
+h1 {
+  font-family: var(--font-sans);
+  font-size: clamp(1.45rem, 5vw, 2.05rem);
+  line-height: 1.22;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  font-size: clamp(0.92rem, 3.4vw, 1.05rem);
+  color: var(--text-muted);
+  font-style: italic;
+  margin-bottom: 1.5rem;
+  line-height: 1.45;
+}
+
+h2 {
+  font-family: var(--font-sans);
+  font-size: clamp(1.15rem, 3.8vw, 1.4rem);
+  font-weight: 600;
+  margin: 2rem 0 0.75rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.3rem;
+  letter-spacing: -0.01em;
+}
+
+h3 {
+  font-family: var(--font-sans);
+  font-size: clamp(1.02rem, 3.4vw, 1.15rem);
+  font-weight: 600;
+  margin: 1.4rem 0 0.45rem;
+}
+
+p {
+  margin-bottom: 1.15rem;
+}
+
+ul, ol {
+  margin-bottom: 1.25rem;
+  padding-left: 1.3rem;
+}
+
+li {
+  margin-bottom: 0.35rem;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background-color: var(--code-bg);
+  border: 1px solid var(--code-border);
+  padding: 0.15em 0.35em;
+  border-radius: 4px;
+  word-break: break-word;
+}
+
+pre {
+  background-color: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-radius: 8px;
+  padding: 0.9rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 1.1rem 0 1.4rem;
+  font-family: var(--font-mono);
+  font-size: clamp(0.75rem, 2.7vw, 0.84rem);
+  line-height: 1.45;
+}
+
+pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: inherit;
+  word-break: normal;
+}
+
+.callout {
+  background-color: var(--surface);
+  border-left: 4px solid var(--accent);
+  border-top: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 1rem;
+  margin: 1.4rem 0;
+  border-radius: 0 8px 8px 0;
+}
+
+.callout.tip {
+  border-left-color: var(--success-text);
+}
+
+.callout.warning {
+  border-left-color: #f59e0b;
+}
+
+.callout-title {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.3rem;
+}
+
+.comparison-grid, .service-card-grid, .algo-compare-grid, .algo-grid, .compare-rag-grid, .metric-grid, .scramble-box {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.9rem;
+  margin: 1.4rem 0;
+}
+
+@media (min-width: 641px) {
+  .comparison-grid, .service-card-grid, .algo-compare-grid, .algo-grid, .compare-rag-grid, .metric-grid, .scramble-box {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.grid-col, .service-card, .algo-card, .algo-box, .rag-col, .metric-card, .scramble-col, .math-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.infra-diagram, .hierarchy-box, .funnel-container, .graph-schema-box, .extraction-flow, .er-diagram, .router-diagram, .blueprint-box, .prompt-template-box, .artifact-snippet, .cypher-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.9rem;
+  margin: 1.25rem 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  font-family: var(--font-mono);
+  font-size: clamp(0.72rem, 2.5vw, 0.82rem);
+  line-height: 1.42;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.25rem 0;
+  font-family: var(--font-sans);
+  font-size: clamp(0.8rem, 2.8vw, 0.88rem);
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+table th, table td {
+  border: 1px solid var(--border);
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+}
+
+table th {
+  background: var(--code-bg);
+  font-weight: 600;
+}
+
+.quiz-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.2rem;
+  margin: 1.8rem 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.quiz-badge {
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: var(--accent-light);
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+}
+
+.quiz-question {
+  font-family: var(--font-sans);
+  font-size: clamp(0.92rem, 3.6vw, 1.02rem);
+  font-weight: 600;
+  line-height: 1.4;
+  margin-bottom: 0.9rem;
+  color: var(--text);
+}
+
+.quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.quiz-option-btn {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  text-align: left;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 0.9rem;
+  font-family: var(--font-sans);
+  font-size: clamp(0.82rem, 3vw, 0.88rem);
+  line-height: 1.4;
+  color: var(--text);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.1s ease, background 0.15s ease;
+}
+
+.quiz-option-btn:active {
+  transform: scale(0.98);
+}
+
+.quiz-option-btn.selected-correct {
+  background: var(--success-bg);
+  border-color: var(--success-text);
+  color: var(--success-text);
+  font-weight: 600;
+}
+
+.quiz-option-btn.selected-incorrect {
+  background: var(--danger-bg);
+  border-color: var(--danger-text);
+  color: var(--danger-text);
+}
+
+.quiz-feedback {
+  display: none;
+  font-family: var(--font-sans);
+  font-size: 0.86rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: 8px;
+  margin-top: 0.9rem;
+  line-height: 1.42;
+}
+
+.quiz-feedback.show-correct {
+  display: block;
+  background: var(--success-bg);
+  color: var(--success-text);
+}
+
+.quiz-feedback.show-incorrect {
+  display: block;
+  background: var(--danger-bg);
+  color: var(--danger-text);
+}
+
+.mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(250, 249, 245, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  padding: 0.65rem 1rem max(0.65rem, env(safe-area-inset-bottom));
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  z-index: 1000;
+}
+
+@media (prefers-color-scheme: dark) {
+  .mobile-bottom-nav {
+    background: rgba(18, 18, 20, 0.92);
+  }
+}
+
+.nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  touch-action: manipulation;
+}
+
+.nav-btn:active {
+  transform: scale(0.96);
+}
+
+.nav-btn.primary {
+  background: var(--accent);
+  color: #ffffff;
+  border-color: var(--accent);
+}
+
+.nav-btn.disabled {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+  </style>
+</head>
+<body>
+  <div class="mobile-top-bar">
+    <a href="../index.html">&larr; Course Index</a>
+    <span>Lesson 09 of 20</span>
+  </div>
+
+  <header>
+    
+    <div class="lesson-meta">Lesson 0009 &bull; Production Infrastructure</div>
+    <h1>Vertex AI Vector Search in Production</h1>
+    <div class="subtitle">A DevOps guide to Indexes, Endpoints, Streaming updates, and VPC Peering.</div>
+  
+  </header>
+
+  <main>
+    
+    <p>Now that we understand how ScaNN indexes high-dimensional vectors, how do you actually deploy, operate, and maintain this in Google Cloud? For a DevOps engineer, Vertex AI Vector Search introduces a distinct 3-tier architectural hierarchy.</p>
+
+    <h2>The 3-Tier Resource Hierarchy</h2>
+
+    <div class="hierarchy-box">
+[Tier 1: Cold Storage Data]
+ Cloud Storage Bucket (gs://aml-embeddings/data.jsonl)
+ &bull; Stores raw JSONL records: {"id": "chunk_042", "embedding": [...], "restricts": [...]}
+         │
+         ▼ (Trigger Index Build via gcloud / API)
+[Tier 2: The Compiled Index]
+ Vertex AI Index (projects/123/locations/us-central1/indexes/456)
+ &bull; The compiled ScaNN binary data structure (cannot serve queries directly)
+         │
+         ▼ (Deploy to Serving Cluster)
+[Tier 3: The Live Serving Cluster]
+ Vertex AI Index Endpoint (projects/123/locations/us-central1/indexEndpoints/789)
+ &bull; Hosts the DeployedIndex on managed GCE nodes (e.g., e2-standard-16)
+ &bull; Serves live sub-5ms queries over Private Service Connect (PSC) or VPC Peering
+    </div>
+
+    <h2>Batch Updates vs. Streaming Updates</h2>
+    <p>When creating a Vector Search index in GCP, you must choose the update mode up front:</p>
+
+    <ul>
+      <li><strong>Batch Update (Static Index):</strong> You dump files to Cloud Storage and trigger an index build. Best for historical case backfills. Rebuilding an index of 10M items takes 30–60 minutes, but produces the highest query throughput and lowest storage cost.</li>
+      <li><strong>Streaming Update (Dynamic Index):</strong> Allows inserting, updating, or deleting individual vectors via a real-time API in milliseconds. Essential for live AML monitoring systems where new incoming wire transfers must be searchable immediately.</li>
+    </ul>
+
+    <h2>Production Networking: Keeping Banking Data Private</h2>
+    <p>Financial crime and banking data must never traverse the public internet. Vertex AI Vector Search provides two enterprise networking modes:</p>
+    <ol style="margin-left: 1.5rem; margin-bottom: 1.25rem;">
+      <li><strong>VPC Network Peering:</strong> Direct peering between your organization's custom VPC and Google's internal service network.</li>
+      <li><strong>Private Service Connect (PSC):</strong> Exposes the Vector Search endpoint as a private IP address (forwarding rule) inside your own subnet. This is the modern GCP best practice because it eliminates IP address overlap conflicts.</li>
+    </ol>
+
+    <h2>DevOps Sizing & Deployment Command</h2>
+    <p>Deploying a compiled index to an endpoint using the <code>gcloud</code> CLI:</p>
+
+    <pre><code>gcloud ai index-endpoints deploy-index ENDPOINT_ID \
+  --region=us-central1 \
+  --index=INDEX_ID \
+  --deployed-index-id=aml_cases_deployed_v1 \
+  --display-name="AML Case Narrative Index" \
+  --min-replica-count=2 \
+  --max-replica-count=5 \
+  --machine-type=e2-standard-16</code></pre>
+
+    <div class="callout tip">
+      <div class="callout-title">High Availability Rule</div>
+      Always set <code>--min-replica-count=2</code> in production. Google Cloud automatically distributes replicas across separate availability zones to guarantee continuous uptime during platform maintenance.
+    </div>
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz-card">
+      <div class="quiz-badge">Retrieval Practice</div>
+      <div class="quiz-question">
+        In Vertex AI Vector Search, why can an Index resource not be queried directly without first deploying it to an Index Endpoint?
+      </div>
+
+      <div class="quiz-options">
+        <button class="quiz-option-btn" onclick="checkAnswer(this, true)">
+          Index resources represent compiled storage artifacts requiring dedicated compute cluster hosting.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Index resources contain unencrypted banking records that violate cloud provider compliance rules.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Index resources lack mathematical floating point coordinates until deployed to regional instances.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Index resources only operate through analytical BigQuery data warehouse batch processing pipelines.
+        </button>
+      </div>
+
+      <div id="quiz-feedback" class="quiz-feedback"></div>
+    </div>
+
+    <h2>Primary Source Recommendation</h2>
+    <p>Read Google Cloud's deployment guide:</p>
+    <p>&bull; <a href="https://cloud.google.com/vertex-ai/docs/vector-search/deploy-index-public" target="_blank" rel="noopener"><strong>Deploy an Index to an Endpoint (Vertex AI Vector Search)</strong></a>.<br>
+    <em>Review the trade-offs between dedicated machine types and automatic replica scaling.</em></p>
+
+    <div class="callout">
+      <div class="callout-title">Teacher Reminder</div>
+      Do you always need a dedicated Vector Search cluster, or can you use BigQuery? In Lesson 10, we compare: <strong>BigQuery Vector Search vs. Dedicated Vector Search</strong>.
+    </div>
+  
+  </main>
+
+  <div class="mobile-bottom-nav">
+    <a class="nav-btn" href="0008-scalable-vector-indexing-hnsw-scann.html">&larr; Prev</a>
+    <a class="nav-btn" href="../index.html">📚 Index</a>
+    <a class="nav-btn primary" href="0010-bigquery-vector-search-vs-dedicated.html">Next &rarr;</a>
+  </div>
+
+  <script>
+
+    function checkAnswer(btn, isCorrect) {
+      const allButtons = document.querySelectorAll('.quiz-option-btn');
+      allButtons.forEach(b => {
+        b.disabled = true;
+        b.classList.remove('selected-correct', 'selected-incorrect');
+      });
+
+      const feedback = document.getElementById('quiz-feedback');
+      if (isCorrect) {
+        btn.classList.add('selected-correct');
+        feedback.className = 'quiz-feedback show-correct';
+        feedback.innerHTML = '<strong>Correct!</strong> An Index in Vertex AI is an immutable data artifact compiled from vectors. It needs an Index Endpoint to provision the actual RAM, CPU, and networking endpoints that serve incoming queries.';
+      } else {
+        btn.classList.add('selected-incorrect');
+        feedback.className = 'quiz-feedback show-incorrect';
+        feedback.innerHTML = '<strong>Not quite.</strong> The Index is just the compiled data structure in cloud storage; the Index Endpoint is the running server fleet (GCE VMs) that loads the index into memory to respond to queries.';
+      }
+    }
+  
+  </script>
+</body>
+</html>

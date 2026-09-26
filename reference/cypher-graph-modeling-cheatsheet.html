@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reference: Cypher & Knowledge Graph Modeling Cheat Sheet</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <style>
+    table.cypher-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0 2rem;
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+    }
+    table.cypher-table th, table.cypher-table td {
+      border: 1px solid var(--border);
+      padding: 0.75rem 1rem;
+      text-align: left;
+    }
+    table.cypher-table th {
+      background-color: var(--code-bg);
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    table.cypher-table tr:nth-child(even) td {
+      background-color: #fafbfc;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="lesson-meta">Architecture Reference Document #04</div>
+    <h1>Cypher & Knowledge Graph Modeling Cheat Sheet</h1>
+    <div class="subtitle">Standardized property graph patterns, syntax, and AML detection queries for Neo4j.</div>
+  </header>
+
+  <main>
+    <h2>1. The Property Graph Anatomy</h2>
+    <p>Unlike relational tables that link entities via foreign keys, a Property Graph stores explicit pointers:</p>
+    <ul>
+      <li><strong>Nodes:</strong> The entities (e.g., <code>(:Person)</code>, <code>(:Company)</code>, <code>(:Account)</code>, <code>(:Address)</code>).</li>
+      <li><strong>Labels:</strong> The type tags on nodes (can have multiple labels, e.g., <code>:Person:PEP:Sanctioned</code>).</li>
+      <li><strong>Relationships (Edges):</strong> Directed connections (e.g., <code>-[:BENEFICIAL_OWNER_OF]-&gt;</code>, <code>-[:TRANSFERRED]-&gt;</code>).</li>
+      <li><strong>Properties:</strong> Key-value metadata on both nodes and edges (e.g., <code>{amount: 50000, currency: "USD", timestamp: "2024-09-12"}</code>).</li>
+    </ul>
+
+    <h2>2. Core Cypher AML Query Patterns</h2>
+
+    <table class="cypher-table">
+      <thead>
+        <tr>
+          <th>Investigation Pattern</th>
+          <th>Cypher Query Pattern</th>
+          <th>What It Detects</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Direct Beneficial Ownership</strong></td>
+          <td><pre style="margin:0;"><code>MATCH (p:Person {id: 'P_901'})-[:BENEFICIAL_OWNER_OF]->(c:Company)
+RETURN p.name, c.name, c.jurisdiction</code></pre></td>
+          <td>Identifies all corporate entities controlled by a specific individual.</td>
+        </tr>
+        <tr>
+          <td><strong>Shared Physical Address (Shell Factory)</strong></td>
+          <td><pre style="margin:0;"><code>MATCH (c1:Company)-[:REGISTERED_AT]->(a:Address)<-[:REGISTERED_AT]-(c2:Company)
+WHERE c1 <> c2
+RETURN a.street, count(DISTINCT c1) AS shell_count
+ORDER BY shell_count DESC</code></pre></td>
+          <td>Uncovers registered office addresses hosting dozens of distinct shell companies.</td>
+        </tr>
+        <tr>
+          <td><strong>Multi-Hop Money Trails (1 to 5 Hops)</strong></td>
+          <td><pre style="margin:0;"><code>MATCH path = (origin:Account {id: 'ACC_START'})-[:TRANSFERRED*1..5]->(dest:Account)
+WHERE dest.is_sanctioned = true
+RETURN path</code></pre></td>
+          <td>Traces layered wire transfers across up to 5 intermediary mule accounts.</td>
+        </tr>
+        <tr>
+          <td><strong>Circular Transactions (Layering Rings)</strong></td>
+          <td><pre style="margin:0;"><code>MATCH path = (a:Account)-[:TRANSFERRED*2..6]->(a)
+RETURN [n in nodes(path) | n.id] AS ring, length(path) AS hops</code></pre></td>
+          <td>Detects money laundering loops where funds return to the originator after laundering.</td>
+        </tr>
+      </tbody>
+    </table>
+  </main>
+
+  <footer>
+    <div><a href="../lessons/0013-knowledge-graphs-property-graph-modeling.html">&larr; Go to Lesson 0013</a></div>
+    <div>learn_ai architecture workspace</div>
+  </footer>
+</body>
+</html>

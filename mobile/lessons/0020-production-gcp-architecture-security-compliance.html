@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Lesson 0020: Production GCP Architecture, Security & Compliance</title>
+  <style>
+
+:root {
+  --bg: #faf9f5;
+  --surface: #ffffff;
+  --text: #1d1d1f;
+  --text-muted: #6e6e73;
+  --border: #e5e5ea;
+  --accent: #0071e3;
+  --accent-light: #e8f2ff;
+  --accent-dark: #0056b3;
+  --success-bg: #eaf8ee;
+  --success-text: #1e7e34;
+  --danger-bg: #fdeeee;
+  --danger-text: #d93025;
+  --code-bg: #f2f2f7;
+  --code-border: #e5e5ea;
+  --font-serif: -apple-system-ui-serif, "Charter", "New York", Palatino, serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #000000;
+    --surface: #1c1c1e;
+    --text: #f2f2f7;
+    --text-muted: #8e8e93;
+    --border: #2c2c2e;
+    --accent: #2997ff;
+    --accent-light: #152942;
+    --accent-dark: #58a6ff;
+    --success-bg: #142e1b;
+    --success-text: #34c759;
+    --danger-bg: #321617;
+    --danger-text: #ff453a;
+    --code-bg: #1c1c1e;
+    --code-border: #38383a;
+  }
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-serif);
+  font-size: clamp(16px, 3.8vw, 18px);
+  line-height: 1.65;
+  padding: 1rem 1rem 5.5rem;
+  max-width: 680px;
+  margin: 0 auto;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (min-width: 768px) {
+  body {
+    max-width: 760px;
+    padding: 2rem 2rem 6.5rem;
+  }
+}
+
+.mobile-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.mobile-top-bar a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.lesson-meta {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+}
+
+h1 {
+  font-family: var(--font-sans);
+  font-size: clamp(1.45rem, 5vw, 2.05rem);
+  line-height: 1.22;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  font-size: clamp(0.92rem, 3.4vw, 1.05rem);
+  color: var(--text-muted);
+  font-style: italic;
+  margin-bottom: 1.5rem;
+  line-height: 1.45;
+}
+
+h2 {
+  font-family: var(--font-sans);
+  font-size: clamp(1.15rem, 3.8vw, 1.4rem);
+  font-weight: 600;
+  margin: 2rem 0 0.75rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.3rem;
+  letter-spacing: -0.01em;
+}
+
+h3 {
+  font-family: var(--font-sans);
+  font-size: clamp(1.02rem, 3.4vw, 1.15rem);
+  font-weight: 600;
+  margin: 1.4rem 0 0.45rem;
+}
+
+p {
+  margin-bottom: 1.15rem;
+}
+
+ul, ol {
+  margin-bottom: 1.25rem;
+  padding-left: 1.3rem;
+}
+
+li {
+  margin-bottom: 0.35rem;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background-color: var(--code-bg);
+  border: 1px solid var(--code-border);
+  padding: 0.15em 0.35em;
+  border-radius: 4px;
+  word-break: break-word;
+}
+
+pre {
+  background-color: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-radius: 8px;
+  padding: 0.9rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 1.1rem 0 1.4rem;
+  font-family: var(--font-mono);
+  font-size: clamp(0.75rem, 2.7vw, 0.84rem);
+  line-height: 1.45;
+}
+
+pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: inherit;
+  word-break: normal;
+}
+
+.callout {
+  background-color: var(--surface);
+  border-left: 4px solid var(--accent);
+  border-top: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 1rem;
+  margin: 1.4rem 0;
+  border-radius: 0 8px 8px 0;
+}
+
+.callout.tip {
+  border-left-color: var(--success-text);
+}
+
+.callout.warning {
+  border-left-color: #f59e0b;
+}
+
+.callout-title {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.3rem;
+}
+
+.comparison-grid, .service-card-grid, .algo-compare-grid, .algo-grid, .compare-rag-grid, .metric-grid, .scramble-box {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.9rem;
+  margin: 1.4rem 0;
+}
+
+@media (min-width: 641px) {
+  .comparison-grid, .service-card-grid, .algo-compare-grid, .algo-grid, .compare-rag-grid, .metric-grid, .scramble-box {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.grid-col, .service-card, .algo-card, .algo-box, .rag-col, .metric-card, .scramble-col, .math-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.infra-diagram, .hierarchy-box, .funnel-container, .graph-schema-box, .extraction-flow, .er-diagram, .router-diagram, .blueprint-box, .prompt-template-box, .artifact-snippet, .cypher-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.9rem;
+  margin: 1.25rem 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  font-family: var(--font-mono);
+  font-size: clamp(0.72rem, 2.5vw, 0.82rem);
+  line-height: 1.42;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.25rem 0;
+  font-family: var(--font-sans);
+  font-size: clamp(0.8rem, 2.8vw, 0.88rem);
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+table th, table td {
+  border: 1px solid var(--border);
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+}
+
+table th {
+  background: var(--code-bg);
+  font-weight: 600;
+}
+
+.quiz-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.2rem;
+  margin: 1.8rem 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.quiz-badge {
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: var(--accent-light);
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+}
+
+.quiz-question {
+  font-family: var(--font-sans);
+  font-size: clamp(0.92rem, 3.6vw, 1.02rem);
+  font-weight: 600;
+  line-height: 1.4;
+  margin-bottom: 0.9rem;
+  color: var(--text);
+}
+
+.quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.quiz-option-btn {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  text-align: left;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 0.9rem;
+  font-family: var(--font-sans);
+  font-size: clamp(0.82rem, 3vw, 0.88rem);
+  line-height: 1.4;
+  color: var(--text);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.1s ease, background 0.15s ease;
+}
+
+.quiz-option-btn:active {
+  transform: scale(0.98);
+}
+
+.quiz-option-btn.selected-correct {
+  background: var(--success-bg);
+  border-color: var(--success-text);
+  color: var(--success-text);
+  font-weight: 600;
+}
+
+.quiz-option-btn.selected-incorrect {
+  background: var(--danger-bg);
+  border-color: var(--danger-text);
+  color: var(--danger-text);
+}
+
+.quiz-feedback {
+  display: none;
+  font-family: var(--font-sans);
+  font-size: 0.86rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: 8px;
+  margin-top: 0.9rem;
+  line-height: 1.42;
+}
+
+.quiz-feedback.show-correct {
+  display: block;
+  background: var(--success-bg);
+  color: var(--success-text);
+}
+
+.quiz-feedback.show-incorrect {
+  display: block;
+  background: var(--danger-bg);
+  color: var(--danger-text);
+}
+
+.mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(250, 249, 245, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  padding: 0.65rem 1rem max(0.65rem, env(safe-area-inset-bottom));
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  z-index: 1000;
+}
+
+@media (prefers-color-scheme: dark) {
+  .mobile-bottom-nav {
+    background: rgba(18, 18, 20, 0.92);
+  }
+}
+
+.nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  touch-action: manipulation;
+}
+
+.nav-btn:active {
+  transform: scale(0.96);
+}
+
+.nav-btn.primary {
+  background: var(--accent);
+  color: #ffffff;
+  border-color: var(--accent);
+}
+
+.nav-btn.disabled {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+  </style>
+</head>
+<body>
+  <div class="mobile-top-bar">
+    <a href="../index.html">&larr; Course Index</a>
+    <span>Lesson 20 of 20</span>
+  </div>
+
+  <header>
+    
+    <div class="lesson-meta">Lesson 0020 &bull; Production Architecture & Operations</div>
+    <h1>Production GCP Architecture, Security & Compliance</h1>
+    <div class="subtitle">The complete DevOps blueprint: Event-driven ingestion, VPC-SC perimeters, and RAGAS audit evaluation.</div>
+  
+  </header>
+
+  <main>
+    
+    <p>Congratulations on reaching the final lesson of our curriculum! In this capstone, we bring together every concept you have learned—parsing, chunking, embeddings, ScaNN indexing, property graphs, and query routing—into an auditable, enterprise-grade cloud blueprint on Google Cloud.</p>
+
+    <h2>The End-to-End Enterprise Production Blueprint</h2>
+
+    <div class="blueprint-box">
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                        SECURE BANKING VPC SERVICE CONTROLS PERIMETER                   │
+│                                                                                        │
+│  [1. INGESTION]                                                                        │
+│   Bank Dossiers / Scans ──► Cloud Storage Bucket (gs://aml-evidence-drop/)              │
+│                                   │ (GCS Object Finalize Event)                        │
+│                                   ▼                                                    │
+│                             [Eventarc]                                                 │
+│                                   │                                                    │
+│                                   ▼                                                    │
+│  [2. PROCESSING]            [Cloud Run Worker]                                         │
+│                                   ├──► Cloud Document AI (OCR & Table Extraction)      │
+│                                   ├──► Chunking & Metadata Tagging                     │
+│                                   ├──► Vertex AI Embeddings (text-embedding-004)       │
+│                                   └──► Vertex AI Gemini 1.5 (Structured Entity Triples)│
+│                                                                                        │
+│  [3. STORAGE]                     │                                                    │
+│         ┌─────────────────────────┴────────────────────────┐                           │
+│         ▼                                                  ▼                           │
+│   Vertex AI Vector Search                           Neo4j AuraDB on GCP                │
+│   (ScaNN High-Scale Vector Index)                   (Property Graph Network)           │
+│   Accessible via Private Service Connect             Accessible via PSC Subnet         │
+│                                                                                        │
+│  [4. SERVING]                                                                          │
+│   Compliance Web UI ──► [Cloud Run Query Gateway & Router]                             │
+│                                   │                                                    │
+│                                   ├──► Vector Search (Semantic Narratives)             │
+│                                   ├──► Neo4j Cypher (Multi-hop Ownership Chains)       │
+│                                   └──► Vertex AI Gemini 1.5 (Prompt Grounding & SAR)   │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+    </div>
+
+    <h2>Security & Banking Compliance Invariants</h2>
+    <p>As a DevOps engineer operating in regulated banking environments, your infrastructure must satisfy strict audit controls:</p>
+
+    <ul>
+      <li><strong>VPC Service Controls (VPC-SC):</strong> Creates a cryptographic security perimeter around your Cloud Storage buckets, Document AI processors, and Vertex AI endpoints. Even if an attacker gains stolen IAM credentials, they cannot exfiltrate banking records outside the perimeter.</li>
+      <li><strong>Private Service Connect (PSC):</strong> Eliminates public IP exposure. All communication between Cloud Run, Vertex AI Vector Search, and Neo4j stays strictly inside private VPC subnets.</li>
+      <li><strong>Customer-Managed Encryption Keys (CMEK):</strong> All vectors, graph nodes, and documents are encrypted at rest using keys managed in Google Cloud KMS.</li>
+      <li><strong>Immutable Audit Trails:</strong> Every query submitted by an investigator, including the retrieved chunks and generated response, is streamed to BigQuery with full tamper-evident Cloud Audit Logs for federal regulators (FinCEN/OCC).</li>
+    </ul>
+
+    <h2>Evaluating Retrieval Quality: The RAGAS Framework</h2>
+    <p>How do you know if your pipeline is actually working or if retrieval quality is degrading over time? Never rely on manual vibe checks. Production systems automate evaluation using <strong>RAGAS (Retrieval Augmented Generation Assessment)</strong>:</p>
+
+    <div class="metric-grid">
+      <div class="metric-card">
+        <h3>1. Faithfulness (Zero Hallucination)</h3>
+        <p>Measures whether every single statement made by the LLM is mathematically grounded in the retrieved evidence chunks. Target: <strong>&gt; 0.98</strong>.</p>
+      </div>
+
+      <div class="metric-card">
+        <h3>2. Answer Relevance</h3>
+        <p>Measures whether the generated brief directly addresses the investigator's question without extraneous filler. Target: <strong>&gt; 0.90</strong>.</p>
+      </div>
+
+      <div class="metric-card">
+        <h3>3. Context Precision (Signal-to-Noise)</h3>
+        <p>Evaluates whether your vector index and re-ranker placed the true gold chunks at the top of the context window. Target: <strong>&gt; 0.85</strong>.</p>
+      </div>
+
+      <div class="metric-card">
+        <h3>4. Context Recall</h3>
+        <p>Verifies whether all facts needed to answer the question were successfully retrieved from storage. Target: <strong>&gt; 0.90</strong>.</p>
+      </div>
+    </div>
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz-card">
+      <div class="quiz-badge">Retrieval Practice</div>
+      <div class="quiz-question">
+        In an enterprise banking AI architecture on GCP, what is the primary role of VPC Service Controls?
+      </div>
+
+      <div class="quiz-options">
+        <button class="quiz-option-btn" onclick="checkAnswer(this, true)">
+          Prevents unauthorized data exfiltration across boundaries by establishing secure cloud perimeters.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Accelerates vector embedding generation by provisioning dedicated GPU machine learning instances.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Converts unstructured PDF documents into high dimensional mathematical floating point coordinates.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Generates synthetic training datasets to evaluate downstream natural language reasoning models.
+        </button>
+      </div>
+
+      <div id="quiz-feedback" class="quiz-feedback"></div>
+    </div>
+
+    <h2>Primary Source Recommendation</h2>
+    <p>Read the definitive paper on RAG evaluation:</p>
+    <p>&bull; <a href="https://arxiv.org/abs/2309.15217" target="_blank" rel="noopener"><strong>RAGAS: Automated Evaluation of Retrieval Augmented Generation</strong> — Es et al. (EACL 2024)</a>.<br>
+    <em>Learn how reference-free evaluation metrics measure faithfulness and context precision in production CI/CD test pipelines.</em></p>
+
+    <div class="callout tip">
+      <div class="callout-title">Curriculum Complete!</div>
+      You have completed all 20 lessons of the curriculum! You now possess a comprehensive, end-to-end architectural understanding of how unstructured data is ingested, chunked, embedded, indexed, modeled as graphs, retrieved, and governed on Google Cloud.<br><br>
+      As your teacher, I am always here to answer follow-up questions, review architecture diagrams, or write proof-of-concept scripts whenever you're ready!
+    </div>
+  
+  </main>
+
+  <div class="mobile-bottom-nav">
+    <a class="nav-btn" href="0019-hybrid-query-routing-unified-retrieval.html">&larr; Prev</a>
+    <a class="nav-btn" href="../index.html">📚 Index</a>
+    <a class="nav-btn disabled" href="#">Next &rarr;</a>
+  </div>
+
+  <script>
+
+    function checkAnswer(btn, isCorrect) {
+      const allButtons = document.querySelectorAll('.quiz-option-btn');
+      allButtons.forEach(b => {
+        b.disabled = true;
+        b.classList.remove('selected-correct', 'selected-incorrect');
+      });
+
+      const feedback = document.getElementById('quiz-feedback');
+      if (isCorrect) {
+        btn.classList.add('selected-correct');
+        feedback.className = 'quiz-feedback show-correct';
+        feedback.innerHTML = '<strong>Correct!</strong> VPC Service Controls establish a perimeter around multi-tenant Google Cloud API services (GCS, Document AI, Vertex AI), preventing data exfiltration even in the event of compromised credentials.';
+      } else {
+        btn.classList.add('selected-incorrect');
+        feedback.className = 'quiz-feedback show-incorrect';
+        feedback.innerHTML = '<strong>Not quite.</strong> VPC Service Controls are designed to prevent data leakage and exfiltration by locking down GCP services inside a trusted security perimeter.';
+      }
+    }
+  
+  </script>
+</body>
+</html>

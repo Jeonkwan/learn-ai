@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 0002: The Vector Pipeline — Chunking, Embeddings & ANN Indexing</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <style>
+    .pipeline-step {
+      display: flex;
+      gap: 1.5rem;
+      margin: 2rem 0;
+      align-items: flex-start;
+    }
+    .step-number {
+      font-family: var(--font-sans);
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--accent);
+      background: var(--accent-light);
+      border: 1px solid var(--accent);
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .step-content {
+      flex: 1;
+    }
+    .step-content h3 {
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+      color: #111;
+    }
+    .artifact-snippet {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-left: 4px solid #64748b;
+      padding: 0.9rem 1.1rem;
+      font-size: 0.92rem;
+      font-family: var(--font-mono);
+      margin: 0.8rem 0;
+      border-radius: 0 6px 6px 0;
+      line-height: 1.45;
+    }
+    .vector-pill {
+      display: inline-block;
+      font-family: var(--font-mono);
+      background: #eef2ff;
+      border: 1px solid #c7d2fe;
+      color: #3730a3;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.82rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="lesson-meta">Lesson 0002 &bull; The Vector Pipeline</div>
+    <h1>The Vector Pipeline: From Raw Narrative to 3ms Retrieval</h1>
+    <div class="subtitle">How unstructured financial crime text is sliced, encoded into high-dimensional space, and queried at enterprise scale on GCP.</div>
+  </header>
+
+  <main>
+    <p>In our previous lesson, we established that vector search solves the <em>fuzzy semantic retrieval</em> problem. But how does unstructured human writing actually become something a search engine can query in 3 milliseconds?</p>
+
+    <p>Let's trace a concrete case through the 4 stages of the pipeline: an investigator analyzing a confidential <strong>Suspicious Activity Report (SAR) narrative</strong>.</p>
+
+    <!-- Step 1 -->
+    <div class="pipeline-step">
+      <div class="step-number">1</div>
+      <div class="step-content">
+        <h3>Stage 1: Document Ingestion & Chunking</h3>
+        <p>A typical investigation dossier spans 80 pages of text. Embedding models cannot ingest an entire 80-page book in one shot (most embedding models cap out at 512–2048 tokens). If you force it, the embedding becomes a generic blur that loses fine details.</p>
+
+        <p>We slice the document into discrete chunks (e.g., <strong>500 tokens with a 50-token sliding overlap</strong>). The overlap ensures that a crucial sentence sitting right on a boundary isn't fractured.</p>
+
+        <div class="artifact-snippet">
+          [Chunk #042 | Source: SAR_Case_2024_09.pdf | Page: 14]<br>
+          "Subject opened multiple domestic accounts at branch #104. Over a 12-day window, subject deposited structured cash sums ($9,800, $9,500, $9,200) specifically staying beneath the $10,000 Currency Transaction Report (CTR) threshold. Funds were subsequently converted into high-value antique jewelry..."
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="pipeline-step">
+      <div class="step-number">2</div>
+      <div class="step-content">
+        <h3>Stage 2: Embedding Generation (Vectorization)</h3>
+        <p>We pass Chunk #042 through a neural embedding model (such as Google Vertex AI's <code>text-embedding-004</code>). The model projects the conceptual meaning of this text into a <strong>768-dimensional coordinate</strong>:</p>
+
+        <div class="artifact-snippet">
+          Embedding = [-0.0412, 0.0891, -0.0125, 0.3120, ..., 0.0048] &rarr; (768 floating point numbers)
+        </div>
+
+        <p>In this geometric space, the mathematical angle between vectors represents conceptual meaning. Even if another document uses completely different words like <em>"smurfing micro-deposits to evade mandatory treasury filings"</em>, its vector coordinate will land right next to Chunk #042.</p>
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="pipeline-step">
+      <div class="step-number">3</div>
+      <div class="step-content">
+        <h3>Stage 3: Vector Indexing & ANN Search (The DevOps Layer)</h3>
+        <p>A bank might accumulate 10 million text chunks across past cases. When an investigator types a query:</p>
+        <p><em>"Find past cases where suspects used repeated cash deposits just below filing thresholds."</em></p>
+
+        <p>The query itself is converted into a 768-dimensional vector. How do we find the top 5 closest chunks among 10,000,000 candidates?</p>
+
+        <p>If you calculate the exact cosine similarity against every single vector (brute-force kNN), you run <strong>O(N) operations</strong>. At 10 million vectors, this takes seconds of CPU time and kills throughput.</p>
+
+        <p>Instead, vector databases (like <strong>Google Cloud Vertex AI Vector Search</strong>) use <strong>Approximate Nearest Neighbor (ANN)</strong> algorithms like <strong>ScaNN</strong> or <strong>HNSW</strong>. By organizing the high-dimensional space into hierarchical clusters and navigation graphs, it finds the top 99% closest vectors in <strong>under 5 milliseconds</strong> without scanning the entire database.</p>
+      </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="pipeline-step">
+      <div class="step-number">4</div>
+      <div class="step-content">
+        <h3>Stage 4: Prompt Augmentation & Generation</h3>
+        <p>The vector search returns the top-3 matching chunks. The application injects them into the LLM system prompt as verified context:</p>
+
+        <pre><code>You are an AML Intelligence Assistant. Use ONLY the provided evidence:
+[EVIDENCE 1]: Chunk #042 (SAR_Case_2024_09.pdf): "Subject deposited structured cash..."
+[EVIDENCE 2]: Chunk #118 (SAR_Case_2023_11.pdf): "Evading CTR reports via smurfing..."
+
+INVESTIGATOR QUESTION: Did we observe structuring patterns in recent watch or jewelry cases?
+ASSISTANT: Yes. In SAR Case 2024-09, the subject executed structured deposits ($9.8k, $9.5k) to stay below the $10,000 CTR limit, subsequently converting the funds into antique jewelry.</code></pre>
+      </div>
+    </div>
+
+    <div class="callout tip">
+      <div class="callout-title">DevOps Infrastructure Takeaway</div>
+      On Google Cloud, you don't manage low-level vector indexing binaries yourself. You write embeddings to Cloud Storage (GCS), trigger a batch index build in <strong>Vertex AI Vector Search</strong> (powered by ScaNN), and deploy to a dedicated <strong>Index Endpoint</strong> with autoscaling.
+    </div>
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz-card">
+      <div class="quiz-badge">Retrieval Practice</div>
+      <div class="quiz-question">
+        In an AML pipeline indexing 10 million transactions and SAR narratives, why do vector databases use Approximate Nearest Neighbor (ANN) indexing instead of exact K-Nearest Neighbor (kNN) search?
+      </div>
+
+      <div class="quiz-options">
+        <button class="quiz-option-btn" onclick="checkAnswer(this, true)">
+          Exact kNN requires scanning all vectors, causing unacceptable latency.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Approximate ANN consumes more memory by storing redundant replicas.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Exact kNN generates corrupted embedding vectors during concurrent traffic.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Approximate ANN guarantees perfect mathematical recall across every request.
+        </button>
+      </div>
+
+      <div id="quiz-feedback" class="quiz-feedback"></div>
+    </div>
+
+    <h2>Primary Source Recommendation</h2>
+    <p>Read Google Research's breakthrough paper behind Vertex AI Vector Search:</p>
+    <p>&bull; <a href="https://arxiv.org/abs/1908.10396" target="_blank" rel="noopener"><strong>Accelerating Large-Scale Inference with Anisotropic Vector Quantization (ScaNN)</strong> — Guo et al. (ICML 2020)</a>.<br>
+    <em>Focus on the introduction: it explains why standard Euclidean quantization distorts dot-product ranking, and how score-aware quantization enables Google-scale vector retrieval at millisecond latencies.</em></p>
+
+    <div class="callout">
+      <div class="callout-title">Teacher Reminder</div>
+      Notice what this vector pipeline gave us: <strong>pure semantic similarity</strong>. But what happens when an investigator asks: <em>"Find the account that received wires from this jeweler and trace who owns that account?"</em> Vectors hit a wall here.<br><br>
+      In Lesson 3, we build the other half of the engine: <strong>The Knowledge Graph Pipeline with Neo4j and Cypher</strong>.
+    </div>
+  </main>
+
+  <footer>
+    <div><a href="../reference/vector-chunking-and-indexing.html">&rarr; View Vector Reference Sheet</a></div>
+    <div>Lesson 0002 &bull; learn_ai</div>
+  </footer>
+
+  <script>
+    function checkAnswer(btn, isCorrect) {
+      const allButtons = document.querySelectorAll('.quiz-option-btn');
+      allButtons.forEach(b => {
+        b.disabled = true;
+        b.classList.remove('selected-correct', 'selected-incorrect');
+      });
+
+      const feedback = document.getElementById('quiz-feedback');
+      if (isCorrect) {
+        btn.classList.add('selected-correct');
+        feedback.className = 'quiz-feedback show-correct';
+        feedback.innerHTML = '<strong>Correct!</strong> Exact kNN requires computing distance against every single one of the 10 million vectors (an O(N) linear scan), creating multi-second query delays. ANN trades a fraction of a percent of theoretical recall for sub-5ms response times.';
+      } else {
+        btn.classList.add('selected-incorrect');
+        feedback.className = 'quiz-feedback show-incorrect';
+        feedback.innerHTML = '<strong>Not quite.</strong> The fundamental constraint is computational time: brute-force exact kNN must evaluate every vector in the database (O(N) complexity). ANN creates indexed search spaces (graphs/clusters) to achieve millisecond response times.';
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Lesson 0003: The Google Cloud AI Ecosystem — A DevOps Guide</title>
+  <style>
+
+:root {
+  --bg: #faf9f5;
+  --surface: #ffffff;
+  --text: #1d1d1f;
+  --text-muted: #6e6e73;
+  --border: #e5e5ea;
+  --accent: #0071e3;
+  --accent-light: #e8f2ff;
+  --accent-dark: #0056b3;
+  --success-bg: #eaf8ee;
+  --success-text: #1e7e34;
+  --danger-bg: #fdeeee;
+  --danger-text: #d93025;
+  --code-bg: #f2f2f7;
+  --code-border: #e5e5ea;
+  --font-serif: -apple-system-ui-serif, "Charter", "New York", Palatino, serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #000000;
+    --surface: #1c1c1e;
+    --text: #f2f2f7;
+    --text-muted: #8e8e93;
+    --border: #2c2c2e;
+    --accent: #2997ff;
+    --accent-light: #152942;
+    --accent-dark: #58a6ff;
+    --success-bg: #142e1b;
+    --success-text: #34c759;
+    --danger-bg: #321617;
+    --danger-text: #ff453a;
+    --code-bg: #1c1c1e;
+    --code-border: #38383a;
+  }
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-serif);
+  font-size: clamp(16px, 3.8vw, 18px);
+  line-height: 1.65;
+  padding: 1rem 1rem 5.5rem;
+  max-width: 680px;
+  margin: 0 auto;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (min-width: 768px) {
+  body {
+    max-width: 760px;
+    padding: 2rem 2rem 6.5rem;
+  }
+}
+
+.mobile-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.mobile-top-bar a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.lesson-meta {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+}
+
+h1 {
+  font-family: var(--font-sans);
+  font-size: clamp(1.45rem, 5vw, 2.05rem);
+  line-height: 1.22;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  font-size: clamp(0.92rem, 3.4vw, 1.05rem);
+  color: var(--text-muted);
+  font-style: italic;
+  margin-bottom: 1.5rem;
+  line-height: 1.45;
+}
+
+h2 {
+  font-family: var(--font-sans);
+  font-size: clamp(1.15rem, 3.8vw, 1.4rem);
+  font-weight: 600;
+  margin: 2rem 0 0.75rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.3rem;
+  letter-spacing: -0.01em;
+}
+
+h3 {
+  font-family: var(--font-sans);
+  font-size: clamp(1.02rem, 3.4vw, 1.15rem);
+  font-weight: 600;
+  margin: 1.4rem 0 0.45rem;
+}
+
+p {
+  margin-bottom: 1.15rem;
+}
+
+ul, ol {
+  margin-bottom: 1.25rem;
+  padding-left: 1.3rem;
+}
+
+li {
+  margin-bottom: 0.35rem;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background-color: var(--code-bg);
+  border: 1px solid var(--code-border);
+  padding: 0.15em 0.35em;
+  border-radius: 4px;
+  word-break: break-word;
+}
+
+pre {
+  background-color: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-radius: 8px;
+  padding: 0.9rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 1.1rem 0 1.4rem;
+  font-family: var(--font-mono);
+  font-size: clamp(0.75rem, 2.7vw, 0.84rem);
+  line-height: 1.45;
+}
+
+pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: inherit;
+  word-break: normal;
+}
+
+.callout {
+  background-color: var(--surface);
+  border-left: 4px solid var(--accent);
+  border-top: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 1rem;
+  margin: 1.4rem 0;
+  border-radius: 0 8px 8px 0;
+}
+
+.callout.tip {
+  border-left-color: var(--success-text);
+}
+
+.callout.warning {
+  border-left-color: #f59e0b;
+}
+
+.callout-title {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.3rem;
+}
+
+.comparison-grid, .service-card-grid, .algo-compare-grid, .algo-grid, .compare-rag-grid, .metric-grid, .scramble-box {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.9rem;
+  margin: 1.4rem 0;
+}
+
+@media (min-width: 641px) {
+  .comparison-grid, .service-card-grid, .algo-compare-grid, .algo-grid, .compare-rag-grid, .metric-grid, .scramble-box {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.grid-col, .service-card, .algo-card, .algo-box, .rag-col, .metric-card, .scramble-col, .math-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.infra-diagram, .hierarchy-box, .funnel-container, .graph-schema-box, .extraction-flow, .er-diagram, .router-diagram, .blueprint-box, .prompt-template-box, .artifact-snippet, .cypher-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.9rem;
+  margin: 1.25rem 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  font-family: var(--font-mono);
+  font-size: clamp(0.72rem, 2.5vw, 0.82rem);
+  line-height: 1.42;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.25rem 0;
+  font-family: var(--font-sans);
+  font-size: clamp(0.8rem, 2.8vw, 0.88rem);
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+table th, table td {
+  border: 1px solid var(--border);
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+}
+
+table th {
+  background: var(--code-bg);
+  font-weight: 600;
+}
+
+.quiz-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.2rem;
+  margin: 1.8rem 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.quiz-badge {
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: var(--accent-light);
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+}
+
+.quiz-question {
+  font-family: var(--font-sans);
+  font-size: clamp(0.92rem, 3.6vw, 1.02rem);
+  font-weight: 600;
+  line-height: 1.4;
+  margin-bottom: 0.9rem;
+  color: var(--text);
+}
+
+.quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.quiz-option-btn {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  text-align: left;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 0.9rem;
+  font-family: var(--font-sans);
+  font-size: clamp(0.82rem, 3vw, 0.88rem);
+  line-height: 1.4;
+  color: var(--text);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.1s ease, background 0.15s ease;
+}
+
+.quiz-option-btn:active {
+  transform: scale(0.98);
+}
+
+.quiz-option-btn.selected-correct {
+  background: var(--success-bg);
+  border-color: var(--success-text);
+  color: var(--success-text);
+  font-weight: 600;
+}
+
+.quiz-option-btn.selected-incorrect {
+  background: var(--danger-bg);
+  border-color: var(--danger-text);
+  color: var(--danger-text);
+}
+
+.quiz-feedback {
+  display: none;
+  font-family: var(--font-sans);
+  font-size: 0.86rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: 8px;
+  margin-top: 0.9rem;
+  line-height: 1.42;
+}
+
+.quiz-feedback.show-correct {
+  display: block;
+  background: var(--success-bg);
+  color: var(--success-text);
+}
+
+.quiz-feedback.show-incorrect {
+  display: block;
+  background: var(--danger-bg);
+  color: var(--danger-text);
+}
+
+.mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(250, 249, 245, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  padding: 0.65rem 1rem max(0.65rem, env(safe-area-inset-bottom));
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  z-index: 1000;
+}
+
+@media (prefers-color-scheme: dark) {
+  .mobile-bottom-nav {
+    background: rgba(18, 18, 20, 0.92);
+  }
+}
+
+.nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  touch-action: manipulation;
+}
+
+.nav-btn:active {
+  transform: scale(0.96);
+}
+
+.nav-btn.primary {
+  background: var(--accent);
+  color: #ffffff;
+  border-color: var(--accent);
+}
+
+.nav-btn.disabled {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+  </style>
+</head>
+<body>
+  <div class="mobile-top-bar">
+    <a href="../index.html">&larr; Course Index</a>
+    <span>Lesson 03 of 20</span>
+  </div>
+
+  <header>
+    
+    <div class="lesson-meta">Lesson 0003 &bull; GCP AI Foundations</div>
+    <h1>The Google Cloud AI Ecosystem</h1>
+    <div class="subtitle">A DevOps map of Vertex AI, Document AI, and BigQuery Vector Search.</div>
+  
+  </header>
+
+  <main>
+    
+    <p>As a DevOps engineer managing Google Cloud Platform (GCP), you already understand VPCs, Cloud Storage (GCS), GKE clusters, and IAM policies. But when product teams ask for "AI search over banking documents," you are suddenly confronted with a flurry of Google brand names: <em>Vertex AI, Document AI, Model Garden, Vector Search, Matching Engine, and Gemini</em>.</p>
+
+    <p>This lesson cuts through the marketing and gives you an exact architectural map of Google's AI services, how they communicate, and how they map to infrastructure you already know.</p>
+
+    <h2>The Three Functional Layers of GCP AI</h2>
+
+    <div class="infra-diagram">
+┌────────────────────────────────────────────────────────────────────────┐
+│                        1. INGESTION & PARSING                          │
+│  [Cloud Storage Bucket] ──► [Cloud Document AI Processors]             │
+│  Raw PDFs, wire scans, trade docs &rarr; Clean UTF-8 text & nested JSON tables │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+┌───────────────────────────────────▼────────────────────────────────────┐
+│                    2. EMBEDDINGS & VECTOR STORAGE                      │
+│  [Vertex AI Model Garden] (text-embedding-004) ──► Float32 Coordinates │
+│                                   │                                    │
+│         ┌─────────────────────────┴────────────────────────┐           │
+│         ▼                                                  ▼           │
+│  [Vertex AI Vector Search]                       [BigQuery Vector]     │
+│  Dedicated low-latency ScaNN cluster             SQL-native analytics  │
+│  Sub-5ms p99 SLA for live APIs                   Batch analytical jobs │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+┌───────────────────────────────────▼────────────────────────────────────┐
+│                    3. GENERATION & REASONING                           │
+│  [Vertex AI Gemini 1.5 API] (Flash / Pro)                              │
+│  Receives retrieved evidence chunks & generates SAR analysis report    │
+└────────────────────────────────────────────────────────────────────────┘
+    </div>
+
+    <h2>Deconstructing the GCP AI Portfolio</h2>
+
+    <div class="service-card-grid">
+      <div class="service-card">
+        <span class="service-badge">Document AI</span>
+        <h3>Cloud Document AI</h3>
+        <p><strong>DevOps Analogy:</strong> A specialized serverless OCR and computer vision microservice.</p>
+        <p><strong>Role:</strong> Turns messy scanned PDFs, customs invoices, and bank statements into machine-readable text while keeping table structures intact.</p>
+        <p><strong>Key Resource:</strong> Processors (e.g., <code>OCR_PROCESSOR</code>, <code>FORM_PARSER_v2</code>).</p>
+      </div>
+
+      <div class="service-card">
+        <span class="service-badge">Foundation Models</span>
+        <h3>Vertex AI Model Garden</h3>
+        <p><strong>DevOps Analogy:</strong> A managed model registry and API gateway (like Artifact Registry for neural networks).</p>
+        <p><strong>Role:</strong> Exposes managed endpoints for Google's models (Gemini 1.5 Pro, Gemini 1.5 Flash) and embedding models (<code>text-embedding-004</code>) via REST and gRPC.</p>
+      </div>
+
+      <div class="service-card">
+        <span class="service-badge">Vector DB</span>
+        <h3>Vertex AI Vector Search</h3>
+        <p><strong>DevOps Analogy:</strong> A distributed, in-memory spatial index cluster (formerly called Matching Engine).</p>
+        <p><strong>Role:</strong> Hosts multi-million vector datasets on dedicated Google infrastructure, executing Approximate Nearest Neighbor (ANN) search with sub-5ms latency.</p>
+      </div>
+
+      <div class="service-card">
+        <span class="service-badge">Data Warehouse</span>
+        <h3>BigQuery Vector Search</h3>
+        <p><strong>DevOps Analogy:</strong> Adding spatial index functions directly into your existing SQL analytical warehouse.</p>
+        <p><strong>Role:</strong> Lets you run cosine similarity searches directly inside standard SQL queries using <code>VECTOR_SEARCH()</code> without moving data out of BigQuery.</p>
+      </div>
+    </div>
+
+    <h2>IAM & Security: How Services Authenticate</h2>
+    <p>In GCP, your workload identity or Cloud Run service account needs precise permissions to interact with these AI services. Avoid blanket <code>Editor</code> or <code>Owner</code> roles:</p>
+
+    <ul>
+      <li><code>roles/documentai.apiUser</code>: Allows a service account to send documents to Document AI processors.</li>
+      <li><code>roles/aiplatform.user</code>: Allows invoking Vertex AI models (Gemini and text-embedding) and querying Vector Search endpoints.</li>
+      <li><code>roles/storage.objectViewer</code>: Grants read access to raw PDFs in your ingestion GCS bucket.</li>
+    </ul>
+
+    <div class="callout tip">
+      <div class="callout-title">DevOps Command-Line Check</div>
+      You can inspect available Vertex AI foundation models directly from the command line using your existing <code>gcloud</code> SDK:
+      <pre><code>gcloud ai models list --project=$PROJECT_ID --region=us-central1</code></pre>
+    </div>
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz-card">
+      <div class="quiz-badge">Retrieval Practice</div>
+      <div class="quiz-question">
+        A financial fraud API requires sub-5 millisecond vector lookups under 2,000 queries per second. Which GCP service architecture should the DevOps engineer deploy?
+      </div>
+
+      <div class="quiz-options">
+        <button class="quiz-option-btn" onclick="checkAnswer(this, true)">
+          Vertex AI Vector Search deployed on dedicated private endpoints.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          BigQuery scheduled query executing standard batch SQL vector functions.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Cloud Storage bucket triggering serverless asynchronous Cloud Run functions.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Document AI processor parsing scanned files through batch processing.
+        </button>
+      </div>
+
+      <div id="quiz-feedback" class="quiz-feedback"></div>
+    </div>
+
+    <h2>Primary Source Recommendation</h2>
+    <p>Read the official Google Cloud architectural whitepaper:</p>
+    <p>&bull; <a href="https://cloud.google.com/vertex-ai/docs/vector-search/overview" target="_blank" rel="noopener"><strong>Google Cloud Vertex AI Vector Search Architecture Overview</strong></a>.<br>
+    <em>Pay close attention to the distinction between an Index (the static data artifact built from GCS) and an Index Endpoint (the live autoscaling serving cluster).</em></p>
+
+    <div class="callout">
+      <div class="callout-title">Teacher Reminder</div>
+      Now that we have mapped the cloud portfolio, we will zoom into the smallest fundamental building block of all language models in Lesson 4: <strong>Tokens, Tokenizers & Context Windows</strong>.
+    </div>
+  
+  </main>
+
+  <div class="mobile-bottom-nav">
+    <a class="nav-btn" href="0002-vector-pipeline-chunking-embeddings-ann.html">&larr; Prev</a>
+    <a class="nav-btn" href="../index.html">📚 Index</a>
+    <a class="nav-btn primary" href="0004-fundamental-unit-tokens-tokenizers-context.html">Next &rarr;</a>
+  </div>
+
+  <script>
+
+    function checkAnswer(btn, isCorrect) {
+      const allButtons = document.querySelectorAll('.quiz-option-btn');
+      allButtons.forEach(b => {
+        b.disabled = true;
+        b.classList.remove('selected-correct', 'selected-incorrect');
+      });
+
+      const feedback = document.getElementById('quiz-feedback');
+      if (isCorrect) {
+        btn.classList.add('selected-correct');
+        feedback.className = 'quiz-feedback show-correct';
+        feedback.innerHTML = '<strong>Correct!</strong> Vertex AI Vector Search is purpose-built for low-latency, high-QPS production serving (sub-5ms SLA). BigQuery Vector Search is designed for analytical SQL batches, not sub-5ms real-time API transactions.';
+      } else {
+        btn.classList.add('selected-incorrect');
+        feedback.className = 'quiz-feedback show-incorrect';
+        feedback.innerHTML = '<strong>Not quite.</strong> For real-time APIs needing sub-5ms p99 at thousands of QPS, Vertex AI Vector Search is the dedicated serving engine. BigQuery is optimized for analytical batch SQL, and Cloud Storage is cold object storage.';
+      }
+    }
+  
+  </script>
+</body>
+</html>

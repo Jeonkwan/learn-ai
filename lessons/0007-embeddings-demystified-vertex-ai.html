@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 0007: Embeddings Demystified with Vertex AI text-embedding-004</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <style>
+    .math-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin: 1.5rem 0;
+    }
+    .vector-demo {
+      font-family: var(--font-mono);
+      font-size: 0.88rem;
+      background: #f6f8fa;
+      border: 1px solid #d0d7de;
+      padding: 0.9rem;
+      border-radius: 6px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="lesson-meta">Lesson 0007 &bull; Embeddings & Vector Geometry</div>
+    <h1>Embeddings Demystified</h1>
+    <div class="subtitle">How text becomes high-dimensional coordinates, measuring semantic angles, and using Vertex AI.</div>
+  </header>
+
+  <main>
+    <p>In traditional DevOps and software architecture, you search text using string matching or inverted keyword indexes (like Elasticsearch or SQL <code>LIKE '%smurfing%'</code>). But keyword search fails when a suspect uses subtle euphemisms—such as writing <em>"facilitation consulting gratuities"</em> instead of <em>"foreign bribery"</em>.</p>
+
+    <p>To capture meaning rather than exact words, we use <strong>Vector Embeddings</strong>. What are they mathematically, and how do they work in production?</p>
+
+    <h2>The Geographic Coordinates Analogy</h2>
+    <p>Think of GPS coordinates on Earth. A GPS coordinate is a <strong>2-dimensional vector</strong>: <code>[Latitude, Longitude]</code>. Because locations are mapped to numbers, you can easily compute the distance between New York and London using basic geometry.</p>
+
+    <p>An <strong>Embedding Model</strong> does the exact same thing, but instead of physical locations, it maps <strong>meanings</strong>; and instead of 2 dimensions, it uses <strong>768 dimensions</strong> (in Google Vertex AI's <code>text-embedding-004</code>) or <strong>1,536 dimensions</strong> (OpenAI).</p>
+
+    <div class="vector-demo">
+      <strong>Sample 768-Dimensional Coordinate Output:</strong><br>
+      [ 0.0241, -0.0519, 0.1034, 0.0082, -0.0871, ..., 0.0415 ]
+    </div>
+
+    <p>In this 768-dimensional space, concepts that mean similar things are placed geometrically close to each other, even if they share zero identical words.</p>
+
+    <h2>The 3 Geometric Distance Metrics</h2>
+    <p>When searching for the closest chunks to an investigator's query, vector engines calculate distance using one of three mathematical metrics:</p>
+
+    <div class="math-box">
+      <h3>1. Cosine Similarity (The Industry Standard)</h3>
+      <p>Measures the <strong>angle (&theta;)</strong> between two vector arrows pointing from the origin, ignoring the length of the arrows.
+      <br>Formula: <code>cos(&theta;) = (A &bull; B) / (||A|| &times; ||B||)</code></p>
+      <ul>
+        <li><code>+1.0</code> &rarr; Vectors point in the exact same direction (identical meaning).</li>
+        <li><code>0.0</code> &rarr; Vectors are perpendicular (orthogonal / unrelated topics).</li>
+        <li><code>-1.0</code> &rarr; Vectors point in opposite directions (polar opposites).</li>
+      </ul>
+
+      <h3>2. Dot Product (Inner Product)</h3>
+      <p>Multiplies corresponding dimensions: <code>A &bull; B = &sum;(A<sub>i</sub> &times; B<sub>i</sub>)</code>. Computationally much faster on CPUs than Cosine because it avoids square roots and division.
+      <br><em>Pro-Tip:</em> When embedding models produce <strong>unit-normalized vectors</strong> (length = 1.0), Dot Product is mathematically identical to Cosine Similarity!</p>
+
+      <h3>3. Euclidean Distance (L2)</h3>
+      <p>The straight-line ruler distance between two coordinate points: <code>d = &radic;&sum;(A<sub>i</sub> - B<sub>i</sub>)<sup>2</sup></code>. Commonly used in computer vision.</p>
+    </div>
+
+    <h2>Calling Vertex AI text-embedding-004 via curl</h2>
+    <p>Here is how a backend or batch worker generates an embedding in Google Cloud:</p>
+
+    <pre><code>curl -X POST \
+  -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+  -H "Content-Type: application/json; charset=utf-8" \
+  "https://us-central1-aiplatform.googleapis.com/v1/projects/${PROJECT_ID}/locations/us-central1/publishers/google/models/text-embedding-004:predict" \
+  -d '{
+    "instances": [
+      {
+        "content": "Wire transfer disguised as luxury yacht maintenance invoice.",
+        "task_type": "RETRIEVAL_DOCUMENT"
+      }
+    ]
+  }'</code></pre>
+
+    <div class="callout tip">
+      <div class="callout-title">GCP Specific: The `task_type` Parameter</div>
+      Vertex AI <code>text-embedding-004</code> allows setting <code>task_type</code>:
+      <ul>
+        <li><code>RETRIEVAL_DOCUMENT</code>: Used when chunking and indexing your archive files.</li>
+        <li><code>RETRIEVAL_QUERY</code>: Used when embedding the investigator's search question.</li>
+      </ul>
+      This asymmetric encoding tunes the vectors for maximum search precision.
+    </div>
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz-card">
+      <div class="quiz-badge">Retrieval Practice</div>
+      <div class="quiz-question">
+        When text embeddings are unit-normalized to length 1.0, which mathematical metric provides the fastest equivalent computation to cosine similarity?
+      </div>
+
+      <div class="quiz-options">
+        <button class="quiz-option-btn" onclick="checkAnswer(this, true)">
+          Dot product multiplication avoids computing costly square root normalizations.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Euclidean straight line distance eliminates high dimensional vector requirements.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Manhattan grid distance compresses floating point numbers into integers.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Hamming string distance computes raw bitwise differences between tokens.
+        </button>
+      </div>
+
+      <div id="quiz-feedback" class="quiz-feedback"></div>
+    </div>
+
+    <h2>Primary Source Recommendation</h2>
+    <p>Read Google Cloud's official model announcement:</p>
+    <p>&bull; <a href="https://cloud.google.com/vertex-ai/generative-ai/docs/embeddings/get-text-embeddings" target="_blank" rel="noopener"><strong>Google Cloud: Get Text Embeddings with Vertex AI</strong></a>.<br>
+    <em>Review the dimension choices (768 vs 256 output dimensions via dimensionality reduction) and task types.</em></p>
+
+    <div class="callout">
+      <div class="callout-title">Teacher Reminder</div>
+      Now we have 768-dimensional float arrays for our chunks. But how do we store and search through 10 million of them without running out of RAM or CPU? That brings us to Lesson 8: <strong>Scalable Vector Indexing — HNSW vs. Google ScaNN</strong>.
+    </div>
+  </main>
+
+  <footer>
+    <div><a href="0006-chunking-architectures-boundary-strategies.html">&larr; Previous: Lesson 0006</a></div>
+    <div><a href="0008-scalable-vector-indexing-hnsw-scann.html">Next: Lesson 0008 &rarr;</a></div>
+  </footer>
+
+  <script>
+    function checkAnswer(btn, isCorrect) {
+      const allButtons = document.querySelectorAll('.quiz-option-btn');
+      allButtons.forEach(b => {
+        b.disabled = true;
+        b.classList.remove('selected-correct', 'selected-incorrect');
+      });
+
+      const feedback = document.getElementById('quiz-feedback');
+      if (isCorrect) {
+        btn.classList.add('selected-correct');
+        feedback.className = 'quiz-feedback show-correct';
+        feedback.innerHTML = '<strong>Correct!</strong> For unit-normalized vectors, the denominator of cosine similarity is 1.0 (||A|| &times; ||B|| = 1). The formula simplifies directly to the dot product, which requires only simple multiply-accumulate operations on CPU/GPU.';
+      } else {
+        btn.classList.add('selected-incorrect');
+        feedback.className = 'quiz-feedback show-incorrect';
+        feedback.innerHTML = '<strong>Not quite.</strong> When vector lengths are normalized to 1.0, the dot product is mathematically equivalent to cosine similarity, but runs much faster because it avoids expensive square root and division calculations.';
+      }
+    }
+  </script>
+</body>
+</html>

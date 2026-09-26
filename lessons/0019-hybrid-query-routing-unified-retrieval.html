@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 0019: Hybrid Query Routing & Unified Retrieval Engine</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <style>
+    .router-diagram {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1.75rem 0;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="lesson-meta">Lesson 0019 &bull; Hybrid Architecture</div>
+    <h1>Hybrid Query Routing & Unified Retrieval</h1>
+    <div class="subtitle">Building the intelligent gateway that dispatches queries to Vectors, Knowledge Graphs, or SQL.</div>
+  </header>
+
+  <main>
+    <p>In a production AML intelligence portal, investigators do not type Cypher queries or choose vector algorithms manually. They type natural language questions into a single search box:</p>
+    <ul>
+      <li>Query A: <em>"Find whistleblower emails discussing luxury yacht kickbacks."</em></li>
+      <li>Query B: <em>"Who are the beneficial owners of accounts that wired money to Cyprus entity 402?"</em></li>
+      <li>Query C: <em>"Show me all suspicious wire transfers connected to suspects who discussed yacht kickbacks."</em></li>
+    </ul>
+
+    <p>Notice that Query A requires <strong>Vector Search</strong>, Query B requires <strong>Knowledge Graph traversal (Cypher)</strong>, and Query C requires <strong>both simultaneously</strong>. How does a production system route these requests automatically?</p>
+
+    <h2>The Intelligent Query Router</h2>
+
+    <div class="router-diagram">
+                       [ Investigator Query ]
+                                  │
+                                  ▼
+                 [ Fast Intent Router / Classifier ]
+         (Cloud Run Service: Gemini 1.5 Flash Function Calling)
+                                  │
+        ┌─────────────────────────┼─────────────────────────┐
+        ▼                         ▼                         ▼
+ [ PATH 1: SEMANTIC ]      [ PATH 2: RELATIONAL ]    [ PATH 3: HYBRID ]
+  Vertex AI Vector Search   Neo4j Knowledge Graph     1. Vector search yields
+  Finds matching narrative  Generates & runs Cypher      suspect nodes.
+  chunks.                   traversal path.           2. Graph traverses hops
+        │                         │                      from those nodes.
+        └─────────────────────────┼─────────────────────────┘
+                                  ▼
+                    [ Unified Context Assembler ]
+        Fuses narrative evidence snippets + graph relationship paths
+                                  │
+                                  ▼
+                      [ Vertex AI Gemini 1.5 ]
+               Generates complete, verified intelligence brief
+    </div>
+
+    <h2>How the Router Classifies Queries</h2>
+    <p>In production, you can implement the router using <strong>Gemini 1.5 Flash with Tool / Function Calling</strong>. In under 150 milliseconds, the model inspects the question and decides which backend tool to call:</p>
+
+    <pre><code>// Router tool definition payload
+{
+  "tools": [{
+    "functionDeclarations": [
+      {
+        "name": "query_vector_search",
+        "description": "Call when searching unstructured text, tone, or descriptive themes.",
+        "parameters": { "type": "OBJECT", "properties": { "semantic_query": { "type": "STRING" } } }
+      },
+      {
+        "name": "query_knowledge_graph",
+        "description": "Call when asking about entity networks, ownership hops, or transaction paths.",
+        "parameters": { "type": "OBJECT", "properties": { "cypher_pattern": { "type": "STRING" } } }
+      },
+      {
+        "name": "query_hybrid_engine",
+        "description": "Call when combining textual themes with multi-hop entity connections."
+      }
+    ]
+  }]
+}</code></pre>
+
+    <h2>Fusing Vector and Graph Context in the Prompt</h2>
+    <p>When a hybrid query is executed, the gateway passes both sources of truth into the final prompt:</p>
+
+    <pre><code>[GROUNDED EVIDENCE FROM VECTOR REPOSITORY]:
+- Whistleblower Email (Chunk #88): "Subject Viktor O. authorized wire for luxury yacht..."
+
+[VERIFIED TOPOLOGY FROM NEO4J KNOWLEDGE GRAPH]:
+- Path: (:Person {name: "Viktor O."}) -[:BENEFICIAL_OWNER]-> (:Company {name: "Apex Ltd"})
+        -[:TRANSFERRED $1,500,000]-> (:Account {iban: "CY9910"}) -[:HELD_BY]-> (:Company {name: "Monaco Marine"})
+
+SYNTHESIS: Viktor O. used his beneficial ownership in Apex Ltd to transfer $1.5M to Monaco Marine, corroborating the whistleblower email regarding yacht financing.</code></pre>
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz-card">
+      <div class="quiz-badge">Retrieval Practice</div>
+      <div class="quiz-question">
+        In an enterprise intelligence gateway, what is the primary role of a query router?
+      </div>
+
+      <div class="quiz-options">
+        <button class="quiz-option-btn" onclick="checkAnswer(this, true)">
+          Directs incoming user queries to the optimal specialized retrieval engine.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Encrypts confidential bank transaction logs within private cloud storage perimeters.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Converts raw unstructured PDF files into high dimensional vector coordinates.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Generates synthetic banking data records to test downstream neural models.
+        </button>
+      </div>
+
+      <div id="quiz-feedback" class="quiz-feedback"></div>
+    </div>
+
+    <h2>Primary Source Recommendation</h2>
+    <p>Read the industry architecture standard on query routing:</p>
+    <p>&bull; <a href="https://arxiv.org/abs/2312.10997" target="_blank" rel="noopener"><strong>Retrieval-Augmented Generation for Large Language Models: A Survey</strong> — Gao et al. (2023)</a>.<br>
+    <em>Section 3.3 ("Modular RAG") details dynamic routing and routing orchestrator design patterns.</em></p>
+
+    <div class="callout">
+      <div class="callout-title">The Grand Finale</div>
+      We have mastered every algorithm, data model, and search engine. In our final lesson, we assemble the entire production architecture on Google Cloud: <strong>Production GCP Architecture, Security, Evaluation & Compliance (Lesson 20)</strong>.
+    </div>
+  </main>
+
+  <footer>
+    <div><a href="0018-graphrag-paradigm-local-vs-global.html">&larr; Previous: Lesson 0018</a></div>
+    <div><a href="0020-production-gcp-architecture-security-compliance.html">Next: Lesson 0020 &rarr;</a></div>
+  </footer>
+
+  <script>
+    function checkAnswer(btn, isCorrect) {
+      const allButtons = document.querySelectorAll('.quiz-option-btn');
+      allButtons.forEach(b => {
+        b.disabled = true;
+        b.classList.remove('selected-correct', 'selected-incorrect');
+      });
+
+      const feedback = document.getElementById('quiz-feedback');
+      if (isCorrect) {
+        btn.classList.add('selected-correct');
+        feedback.className = 'quiz-feedback show-correct';
+        feedback.innerHTML = '<strong>Correct!</strong> A query router analyzes the user intent (semantic text vs graph path vs hybrid) and routes the query to the appropriate engine (Vector Search, Neo4j, or BigQuery) without forcing the user to know the underlying database schemas.';
+      } else {
+        btn.classList.add('selected-incorrect');
+        feedback.className = 'quiz-feedback show-incorrect';
+        feedback.innerHTML = '<strong>Not quite.</strong> The router is an intelligent traffic dispatcher: it classifies query intent to decide whether to invoke vector similarity, graph traversals, or a hybrid combination.';
+      }
+    }
+  </script>
+</body>
+</html>

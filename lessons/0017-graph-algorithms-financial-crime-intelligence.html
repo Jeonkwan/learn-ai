@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 0017: Graph Algorithms for Financial Crime Intelligence</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <style>
+    .algo-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      margin: 1.75rem 0;
+    }
+    .algo-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+    }
+    @media (max-width: 650px) {
+      .algo-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="lesson-meta">Lesson 0017 &bull; Graph Data Science</div>
+    <h1>Graph Algorithms for Financial Crime Intelligence</h1>
+    <div class="subtitle">Uncovering hidden fraud syndicates and mule coordinators using PageRank and Community Detection.</div>
+  </header>
+
+  <main>
+    <p>Targeted Cypher queries work well when an investigator already suspects a specific individual. But how does an intelligence unit proactively discover organized criminal networks hidden across millions of bank accounts?</p>
+
+    <p>We use <strong>Graph Data Science (GDS) Algorithms</strong>. Instead of inspecting nodes one by one, graph algorithms analyze the global topology of the network to calculate risk scores and cluster criminal syndicates.</p>
+
+    <h2>The Two Essential AML Algorithm Families</h2>
+
+    <div class="algo-grid">
+      <div class="algo-box">
+        <h3>1. Centrality: Finding the Mastermind</h3>
+        <p>In a money mule syndicate, the true coordinator rarely transfers money directly to victims. Instead, hundreds of low-level mules send funds through intermediary brokers.</p>
+        <ul>
+          <li><strong>PageRank:</strong> Measures transitive influence. Accounts that receive funds from other high-volume accounts score higher.</li>
+          <li><strong>Betweenness Centrality:</strong> Calculates how often a node sits on the <em>shortest path</em> between all other nodes in the network. A high score flags the vital "bridge" or broker coordinating disparate fraud rings.</li>
+        </ul>
+      </div>
+
+      <div class="algo-box">
+        <h3>2. Community Detection: Unmasking Syndicates</h3>
+        <p>Criminal organizations frequently operate in tightly knit rings that share phone numbers, IP addresses, and device fingerprints to orchestrate synthetic identity fraud.</p>
+        <ul>
+          <li><strong>Louvain / Leiden Algorithm:</strong> Partitions the graph into modular clusters where internal connections are far denser than expected by chance.</li>
+          <li><strong>Weakly Connected Components (WCC):</strong> Discovers isolated sub-networks operating independently from legitimate retail banking traffic.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2>Running Louvain Community Detection in Neo4j GDS</h2>
+    <p>In Neo4j, running community detection requires just a single procedure call:</p>
+
+    <pre><code>// 1. Project the in-memory graph projection
+CALL gds.graph.project(
+  'transferNetwork',
+  'Account',
+  'TRANSFERRED',
+  { relationshipProperties: 'amount' }
+);
+
+// 2. Execute Louvain algorithm and write communityId back to nodes
+CALL gds.louvain.write('transferNetwork', {
+  writeProperty: 'communityId'
+})
+YIELD communityCount, modularity;
+
+// 3. Find the largest suspicious rings
+MATCH (a:Account)
+RETURN a.communityId, count(a) AS cluster_size, sum(a.total_volume) AS ring_volume
+ORDER BY ring_volume DESC
+LIMIT 10;</code></pre>
+
+    <div class="callout tip">
+      <div class="callout-title">Architectural Milestone</div>
+      Notice what we have achieved: we have converted raw unstructured PDFs and ledgers into an interconnected knowledge graph, resolved their identities, and algorithmically isolated criminal syndicates!
+    </div>
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz-card">
+      <div class="quiz-badge">Retrieval Practice</div>
+      <div class="quiz-question">
+        Which graph algorithm family is specifically designed to isolate tightly-knit clusters of coordinated fraud accounts?
+      </div>
+
+      <div class="quiz-options">
+        <button class="quiz-option-btn" onclick="checkAnswer(this, true)">
+          Community detection algorithms identify densely connected clusters within large graph networks.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Vector quantization algorithms compress floating point numbers into compact byte arrays.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Subword tokenization algorithms split unfamiliar foreign words into multiple character fragments.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Document parsing algorithms convert scanned invoice files into structured relational tables.
+        </button>
+      </div>
+
+      <div id="quiz-feedback" class="quiz-feedback"></div>
+    </div>
+
+    <h2>Primary Source Recommendation</h2>
+    <p>Read the definitive paper on community detection:</p>
+    <p>&bull; <a href="https://arxiv.org/abs/0803.0476" target="_blank" rel="noopener"><strong>Fast unfolding of communities in large networks (Louvain)</strong> — Blondel et al. (J. Stat. Mech 2008)</a>.<br>
+    <em>Learn how modularity optimization scales to millions of nodes in seconds.</em></p>
+
+    <div class="callout">
+      <div class="callout-title">Teacher Reminder</div>
+      Now we possess both superpowers: <strong>Vectors</strong> (for nuanced textual narrative recall) and <strong>Knowledge Graphs</strong> (for multi-hop topology and community rings).<br><br>
+      How do we combine them into a single unified AI engine? That brings us to Phase 6: <strong>The GraphRAG Paradigm — Local vs. Global Retrieval (Lesson 18)</strong>.
+    </div>
+  </main>
+
+  <footer>
+    <div><a href="0016-neo4j-gcp-architecture-cypher-querying.html">&larr; Previous: Lesson 0016</a></div>
+    <div><a href="0018-graphrag-paradigm-local-vs-global.html">Next: Lesson 0018 &rarr;</a></div>
+  </footer>
+
+  <script>
+    function checkAnswer(btn, isCorrect) {
+      const allButtons = document.querySelectorAll('.quiz-option-btn');
+      allButtons.forEach(b => {
+        b.disabled = true;
+        b.classList.remove('selected-correct', 'selected-incorrect');
+      });
+
+      const feedback = document.getElementById('quiz-feedback');
+      if (isCorrect) {
+        btn.classList.add('selected-correct');
+        feedback.className = 'quiz-feedback show-correct';
+        feedback.innerHTML = '<strong>Correct!</strong> Community detection algorithms (such as Louvain and Leiden) mathematically partition networks into densely connected modules, pinpointing coordinated syndicates sharing infrastructure.';
+      } else {
+        btn.classList.add('selected-incorrect');
+        feedback.className = 'quiz-feedback show-incorrect';
+        feedback.innerHTML = '<strong>Not quite.</strong> Community detection algorithms are specifically designed to analyze edge densities and group tightly interconnected nodes into clusters (identifying fraud rings).';
+      }
+    }
+  </script>
+</body>
+</html>

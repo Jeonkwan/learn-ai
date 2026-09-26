@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 0008: Scalable Vector Indexing — HNSW vs. Google ScaNN</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <style>
+    .algo-compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      margin: 1.75rem 0;
+    }
+    .algo-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+    }
+    .algo-badge {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      margin-bottom: 0.5rem;
+    }
+    @media (max-width: 650px) {
+      .algo-compare-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="lesson-meta">Lesson 0008 &bull; Vector Indexing</div>
+    <h1>Scalable Vector Indexing</h1>
+    <div class="subtitle">Overcoming the O(N) brute force bottleneck: How HNSW graphs and Google ScaNN achieve sub-5ms search.</div>
+  </header>
+
+  <main>
+    <p>Imagine your bank's ingestion pipeline has converted 10 million pages of financial intelligence into 768-dimensional float arrays. A compliance investigator enters a query. How do we find the top 5 closest vectors?</p>
+
+    <p>As a DevOps engineer, you know that calculating distance against every vector sequentially is an <strong>O(N) full table scan</strong>. At 10 million vectors, computing 10,000,000 dot products requires evaluating <strong>7.68 billion floating-point multiplications</strong> per query! Under concurrent load, your servers would collapse.</p>
+
+    <h2>The Paradigm Shift: Approximate Nearest Neighbor (ANN)</h2>
+    <p>To deliver sub-5ms latencies, vector databases trade away 0.5% of absolute mathematical certainty in exchange for an algorithmic speedup of 1,000x. Instead of scanning everything, they navigate an <strong>indexed search structure</strong>.</p>
+
+    <p>In modern cloud systems, two dominant indexing algorithms power production vector search:</p>
+
+    <div class="algo-compare-grid">
+      <div class="algo-card">
+        <span class="algo-badge" style="background: #e1f0da; color: #2e6930;">Graph-Based</span>
+        <h3>HNSW (Hierarchical Navigable Small World)</h3>
+        <p><strong>Analogy:</strong> Like a multi-lane highway express system combined with airport hub routing.</p>
+        <p><strong>Mechanism:</strong> Builds a multi-layer graph. Top layers contain sparse "expressway" connections that span large distances across the vector space. As search gets closer to the target query, it drops down to denser local layers to zoom into the nearest neighbors.</p>
+        <p><strong>Trade-off:</strong> Extremely high recall (&gt;98%) and fast searches, but <em>very memory-hungry</em>. Storing the graph edges in RAM requires significant extra memory on top of the raw vectors.</p>
+        <p><strong>Used in:</strong> Qdrant, Milvus, Weaviate, pgvector.</p>
+      </div>
+
+      <div class="algo-card">
+        <span class="algo-badge" style="background: #e8f0fe; color: #1a73e8;">Quantization-Based</span>
+        <h3>Google ScaNN (Score-Aware Quantization)</h3>
+        <p><strong>Analogy:</strong> Lossy compression tailored specifically for dot-product ranking.</p>
+        <p><strong>Mechanism:</strong> Clusters vector space (Inverted File / IVF) and compresses 32-bit floats into compact 8-bit or 4-bit representations (Product Quantization). Crucially, Google's breakthrough (<em>Anisotropic Quantization</em>) ensures compression errors do not alter the top-ranked results.</p>
+        <p><strong>Trade-off:</strong> Massive throughput, minimal RAM overhead, and ultra-fast hardware vector acceleration (using AVX-512 and Google TPU/GPU instructions).</p>
+        <p><strong>Used in:</strong> Google Cloud Vertex AI Vector Search.</p>
+      </div>
+    </div>
+
+    <h2>Memory Footprint Calculation for DevOps</h2>
+    <p>When sizing cloud nodes for a 10-million vector index (768 dimensions):</p>
+    <ul>
+      <li><strong>Raw Float32 vectors:</strong> 10M &times; 768 dimensions &times; 4 bytes = <strong>~30.7 GB</strong> of pure vector data.</li>
+      <li><strong>HNSW Graph Overhead:</strong> Adds roughly 1.5x–2x memory for edge pointers &rarr; <strong>~45 GB to 60 GB RAM</strong> required in memory.</li>
+      <li><strong>ScaNN Quantized Index:</strong> Compresses vectors to 8-bit &rarr; reduces footprint to <strong>~8 GB to 12 GB</strong>, drastically lowering VM hosting costs.</li>
+    </ul>
+
+    <div class="callout tip">
+      <div class="callout-title">Architectural Insight</div>
+      This is why Google powers Vertex AI Vector Search with <strong>ScaNN</strong>: it allows indexing billions of items at fractions of the hardware cost required by uncompressed graph indexes.
+    </div>
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz-card">
+      <div class="quiz-badge">Retrieval Practice</div>
+      <div class="quiz-question">
+        How does the Hierarchical Navigable Small World (HNSW) algorithm accelerate vector search across multi-million item databases?
+      </div>
+
+      <div class="quiz-options">
+        <button class="quiz-option-btn" onclick="checkAnswer(this, true)">
+          Traverses hierarchical multi-layer graphs navigating from sparse expressways down to dense clusters.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Executes exhaustive linear distance scans across every single database record in parallel.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Converts multi-dimensional floating point vectors into plain alphanumeric strings for database storage.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Encrypts vector coordinates within hardware security modules to reduce cloud network overhead.
+        </button>
+      </div>
+
+      <div id="quiz-feedback" class="quiz-feedback"></div>
+    </div>
+
+    <h2>Primary Source Recommendation</h2>
+    <p>Read the foundational HNSW paper:</p>
+    <p>&bull; <a href="https://arxiv.org/abs/1603.09320" target="_blank" rel="noopener"><strong>Efficient and robust approximate nearest neighbor search using Hierarchical Navigable Small World graphs</strong> — Malkov & Yashunin (IEEE TPAMI 2018)</a>.<br>
+    <em>Read Section 3 to understand how skip-list concepts are extended to geometric proximity graphs.</em></p>
+
+    <div class="callout">
+      <div class="callout-title">Teacher Reminder</div>
+      Now that we understand how ScaNN and HNSW work mathematically, how do we actually deploy, scale, and configure this in Google Cloud? That brings us to Lesson 9: <strong>Vertex AI Vector Search in Production (Index Endpoints & Sizing)</strong>.
+    </div>
+  </main>
+
+  <footer>
+    <div><a href="0007-embeddings-demystified-vertex-ai.html">&larr; Previous: Lesson 0007</a></div>
+    <div><a href="0009-vertex-ai-vector-search-in-production.html">Next: Lesson 0009 &rarr;</a></div>
+  </footer>
+
+  <script>
+    function checkAnswer(btn, isCorrect) {
+      const allButtons = document.querySelectorAll('.quiz-option-btn');
+      allButtons.forEach(b => {
+        b.disabled = true;
+        b.classList.remove('selected-correct', 'selected-incorrect');
+      });
+
+      const feedback = document.getElementById('quiz-feedback');
+      if (isCorrect) {
+        btn.classList.add('selected-correct');
+        feedback.className = 'quiz-feedback show-correct';
+        feedback.innerHTML = '<strong>Correct!</strong> HNSW uses hierarchical skip-graph layers: it starts with long-distance jumps across sparse top layers and zooms in locally at the dense bottom layer.';
+      } else {
+        btn.classList.add('selected-incorrect');
+        feedback.className = 'quiz-feedback show-incorrect';
+        feedback.innerHTML = '<strong>Not quite.</strong> HNSW works like an expressway skip-list for geometry: traversing sparse long-distance layers first, then descending into dense local neighborhoods.';
+      }
+    }
+  </script>
+</body>
+</html>

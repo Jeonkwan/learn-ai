@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 0016: Neo4j on GCP Architecture & Cypher Querying</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <style>
+    .cypher-box {
+      background: #f6f8fa;
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: 0 6px 6px 0;
+      padding: 1rem 1.25rem;
+      margin: 1.25rem 0;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="lesson-meta">Lesson 0016 &bull; Graph Architecture & Cypher</div>
+    <h1>Neo4j on GCP & Cypher Querying</h1>
+    <div class="subtitle">Deploying graph infrastructure on Google Cloud and hunting money laundering rings using Cypher patterns.</div>
+  </header>
+
+  <main>
+    <p>We now have clean entity triples and resolved nodes. Where does a DevOps engineer run this in Google Cloud, and how do we query it to uncover criminal money rings?</p>
+
+    <h2>Deploying Neo4j on GCP: Two Architectural Paths</h2>
+    <ul>
+      <li><strong>Option 1: Neo4j AuraDB on GCP (Fully Managed SaaS):</strong> Available through the GCP Marketplace. Google and Neo4j manage the clustering, backups, and autoscaling. Connects securely to your VPC via <strong>Private Service Connect (PSC)</strong> without exposing public IPs.</li>
+      <li><strong>Option 2: Self-Managed Neo4j on GKE (Google Kubernetes Engine):</strong> Deploy Neo4j Enterprise as a StatefulSet on GKE using Regional Persistent Disks (SSD). Offers maximum configuration control for air-gapped banking compliance.</li>
+    </ul>
+
+    <h2>Cypher: The Visual Pattern Language</h2>
+    <p>Cypher uses visual ASCII art to represent graph topology: <code>(nodes in parentheses)</code> and <code>-[relationships in brackets]-&gt;</code>.</p>
+
+    <h3>Pattern 1: Detecting Circular Money Laundering Rings</h3>
+    <p>Criminals frequently execute <em>layering loops</em>: sending funds through three or four intermediate accounts across different banks, only to return the cleaned money back to the original controller:</p>
+
+    <div class="cypher-box">
+MATCH path = (origin:Account)-[:TRANSFERRED*2..6]->(origin)
+RETURN [n in nodes(path) | n.iban] AS account_ring,
+       length(path) AS total_hops,
+       nodes(path)[0].owner AS beneficiary;
+    </div>
+    <p>Notice the <code>*2..6</code> syntax: this instructs Neo4j to find paths between 2 and 6 hops long where the start and end account are the exact same node!</p>
+
+    <h3>Pattern 2: Detecting "Shell Company Factories"</h3>
+    <p>A classic red flag in financial crime is finding a single modest address (or corporate secretarial agent) that is registered as the official headquarters of dozens of unrelated holding companies:</p>
+
+    <div class="cypher-box">
+MATCH (c:Company)-[:REGISTERED_AT]->(addr:Address)
+WITH addr, count(c) AS company_count, collect(c.name) AS shell_names
+WHERE company_count >= 20
+RETURN addr.street, addr.city, company_count, shell_names
+ORDER BY company_count DESC;
+    </div>
+
+    <h3>Pattern 3: Sanctions Proximity Screening (3 Degrees of Separation)</h3>
+    <p>An investigator needs to know if Account #9901 has any financial proximity to a sanctioned entity within 3 hops:</p>
+
+    <div class="cypher-box">
+MATCH path = (target:Account {iban: "GB88CHAS9901"})-[:TRANSFERRED*1..3]-(sanctioned:Person {is_sanctioned: true})
+RETURN path, [r in relationships(path) | r.amount] AS transfer_amounts;
+    </div>
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz-card">
+      <div class="quiz-badge">Retrieval Practice</div>
+      <div class="quiz-question">
+        In Neo4j Cypher syntax, which pattern query accurately identifies circular layering money flows returning to the origin account?
+      </div>
+
+      <div class="quiz-options">
+        <button class="quiz-option-btn" onclick="checkAnswer(this, true)">
+          A path expression querying variable length transfers returning to originator.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          A vector similarity join executed against high dimensional embedding coordinates.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          A standard relational group by statement scanning historical database tables.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          A Document AI OCR processor parsing scanned transaction invoice documents.
+        </button>
+      </div>
+
+      <div id="quiz-feedback" class="quiz-feedback"></div>
+    </div>
+
+    <h2>Primary Source Recommendation</h2>
+    <p>Read Neo4j's official manual on Cypher syntax:</p>
+    <p>&bull; <a href="https://neo4j.com/docs/cypher-manual/current/clauses/match/" target="_blank" rel="noopener"><strong>Neo4j Cypher Manual: The MATCH Clause & Pattern Matching</strong></a>.<br>
+    <em>Study how variable-length relationship patterns (<code>*1..5</code>) are optimized by the Cypher cost-based query planner.</em></p>
+
+    <div class="callout">
+      <div class="callout-title">Teacher Reminder</div>
+      Writing Cypher queries by hand works when you know what to look for. But how do you uncover hidden masterminds and fraud rings across 10 million transactions automatically? That brings us to Lesson 17: <strong>Graph Algorithms for Financial Crime Intelligence</strong>.
+    </div>
+  </main>
+
+  <footer>
+    <div><a href="0015-entity-resolution-identity-disambiguation.html">&larr; Previous: Lesson 0015</a></div>
+    <div><a href="../reference/cypher-graph-modeling-cheatsheet.html">Cypher Cheat Sheet</a> &bull; <a href="0017-graph-algorithms-financial-crime-intelligence.html">Next: Lesson 0017 &rarr;</a></div>
+  </footer>
+
+  <script>
+    function checkAnswer(btn, isCorrect) {
+      const allButtons = document.querySelectorAll('.quiz-option-btn');
+      allButtons.forEach(b => {
+        b.disabled = true;
+        b.classList.remove('selected-correct', 'selected-incorrect');
+      });
+
+      const feedback = document.getElementById('quiz-feedback');
+      if (isCorrect) {
+        btn.classList.add('selected-correct');
+        feedback.className = 'quiz-feedback show-correct';
+        feedback.innerHTML = '<strong>Correct!</strong> In Cypher, variable-length relationship expressions like `(a:Account)-[:TRANSFERRED*2..6]->(a)` match closed-loop directed walks through the graph where the destination matches the origin node.';
+      } else {
+        btn.classList.add('selected-incorrect');
+        feedback.className = 'quiz-feedback show-incorrect';
+        feedback.innerHTML = '<strong>Not quite.</strong> Circular loops are identified using variable-length path traversal syntax in Cypher, specifying the same node variable as both the start and end of the relationship path.';
+      }
+    }
+  </script>
+</body>
+</html>

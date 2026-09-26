@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Reference: Cypher & Knowledge Graph Modeling Cheat Sheet</title>
+  <style>
+
+:root {
+  --bg: #faf9f5;
+  --surface: #ffffff;
+  --text: #1d1d1f;
+  --text-muted: #6e6e73;
+  --border: #e5e5ea;
+  --accent: #0071e3;
+  --accent-light: #e8f2ff;
+  --accent-dark: #0056b3;
+  --success-bg: #eaf8ee;
+  --success-text: #1e7e34;
+  --danger-bg: #fdeeee;
+  --danger-text: #d93025;
+  --code-bg: #f2f2f7;
+  --code-border: #e5e5ea;
+  --font-serif: -apple-system-ui-serif, "Charter", "New York", Palatino, serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #000000;
+    --surface: #1c1c1e;
+    --text: #f2f2f7;
+    --text-muted: #8e8e93;
+    --border: #2c2c2e;
+    --accent: #2997ff;
+    --accent-light: #152942;
+    --accent-dark: #58a6ff;
+    --success-bg: #142e1b;
+    --success-text: #34c759;
+    --danger-bg: #321617;
+    --danger-text: #ff453a;
+    --code-bg: #1c1c1e;
+    --code-border: #38383a;
+  }
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-serif);
+  font-size: clamp(16px, 3.8vw, 18px);
+  line-height: 1.65;
+  padding: 1rem 1rem 5.5rem;
+  max-width: 680px;
+  margin: 0 auto;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (min-width: 768px) {
+  body {
+    max-width: 760px;
+    padding: 2rem 2rem 6.5rem;
+  }
+}
+
+.mobile-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.mobile-top-bar a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.lesson-meta {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+}
+
+h1 {
+  font-family: var(--font-sans);
+  font-size: clamp(1.45rem, 5vw, 2.05rem);
+  line-height: 1.22;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  font-size: clamp(0.92rem, 3.4vw, 1.05rem);
+  color: var(--text-muted);
+  font-style: italic;
+  margin-bottom: 1.5rem;
+  line-height: 1.45;
+}
+
+h2 {
+  font-family: var(--font-sans);
+  font-size: clamp(1.15rem, 3.8vw, 1.4rem);
+  font-weight: 600;
+  margin: 2rem 0 0.75rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.3rem;
+  letter-spacing: -0.01em;
+}
+
+h3 {
+  font-family: var(--font-sans);
+  font-size: clamp(1.02rem, 3.4vw, 1.15rem);
+  font-weight: 600;
+  margin: 1.4rem 0 0.45rem;
+}
+
+p {
+  margin-bottom: 1.15rem;
+}
+
+ul, ol {
+  margin-bottom: 1.25rem;
+  padding-left: 1.3rem;
+}
+
+li {
+  margin-bottom: 0.35rem;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background-color: var(--code-bg);
+  border: 1px solid var(--code-border);
+  padding: 0.15em 0.35em;
+  border-radius: 4px;
+  word-break: break-word;
+}
+
+pre {
+  background-color: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-radius: 8px;
+  padding: 0.9rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 1.1rem 0 1.4rem;
+  font-family: var(--font-mono);
+  font-size: clamp(0.75rem, 2.7vw, 0.84rem);
+  line-height: 1.45;
+}
+
+pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: inherit;
+  word-break: normal;
+}
+
+.callout {
+  background-color: var(--surface);
+  border-left: 4px solid var(--accent);
+  border-top: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 1rem;
+  margin: 1.4rem 0;
+  border-radius: 0 8px 8px 0;
+}
+
+.callout.tip {
+  border-left-color: var(--success-text);
+}
+
+.callout.warning {
+  border-left-color: #f59e0b;
+}
+
+.callout-title {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.3rem;
+}
+
+.comparison-grid, .service-card-grid, .algo-compare-grid, .algo-grid, .compare-rag-grid, .metric-grid, .scramble-box {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.9rem;
+  margin: 1.4rem 0;
+}
+
+@media (min-width: 641px) {
+  .comparison-grid, .service-card-grid, .algo-compare-grid, .algo-grid, .compare-rag-grid, .metric-grid, .scramble-box {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.grid-col, .service-card, .algo-card, .algo-box, .rag-col, .metric-card, .scramble-col, .math-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.infra-diagram, .hierarchy-box, .funnel-container, .graph-schema-box, .extraction-flow, .er-diagram, .router-diagram, .blueprint-box, .prompt-template-box, .artifact-snippet, .cypher-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.9rem;
+  margin: 1.25rem 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  font-family: var(--font-mono);
+  font-size: clamp(0.72rem, 2.5vw, 0.82rem);
+  line-height: 1.42;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.25rem 0;
+  font-family: var(--font-sans);
+  font-size: clamp(0.8rem, 2.8vw, 0.88rem);
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+table th, table td {
+  border: 1px solid var(--border);
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+}
+
+table th {
+  background: var(--code-bg);
+  font-weight: 600;
+}
+
+.quiz-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.2rem;
+  margin: 1.8rem 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.quiz-badge {
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: var(--accent-light);
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+}
+
+.quiz-question {
+  font-family: var(--font-sans);
+  font-size: clamp(0.92rem, 3.6vw, 1.02rem);
+  font-weight: 600;
+  line-height: 1.4;
+  margin-bottom: 0.9rem;
+  color: var(--text);
+}
+
+.quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.quiz-option-btn {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  text-align: left;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 0.9rem;
+  font-family: var(--font-sans);
+  font-size: clamp(0.82rem, 3vw, 0.88rem);
+  line-height: 1.4;
+  color: var(--text);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.1s ease, background 0.15s ease;
+}
+
+.quiz-option-btn:active {
+  transform: scale(0.98);
+}
+
+.quiz-option-btn.selected-correct {
+  background: var(--success-bg);
+  border-color: var(--success-text);
+  color: var(--success-text);
+  font-weight: 600;
+}
+
+.quiz-option-btn.selected-incorrect {
+  background: var(--danger-bg);
+  border-color: var(--danger-text);
+  color: var(--danger-text);
+}
+
+.quiz-feedback {
+  display: none;
+  font-family: var(--font-sans);
+  font-size: 0.86rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: 8px;
+  margin-top: 0.9rem;
+  line-height: 1.42;
+}
+
+.quiz-feedback.show-correct {
+  display: block;
+  background: var(--success-bg);
+  color: var(--success-text);
+}
+
+.quiz-feedback.show-incorrect {
+  display: block;
+  background: var(--danger-bg);
+  color: var(--danger-text);
+}
+
+.mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(250, 249, 245, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  padding: 0.65rem 1rem max(0.65rem, env(safe-area-inset-bottom));
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  z-index: 1000;
+}
+
+@media (prefers-color-scheme: dark) {
+  .mobile-bottom-nav {
+    background: rgba(18, 18, 20, 0.92);
+  }
+}
+
+.nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  touch-action: manipulation;
+}
+
+.nav-btn:active {
+  transform: scale(0.96);
+}
+
+.nav-btn.primary {
+  background: var(--accent);
+  color: #ffffff;
+  border-color: var(--accent);
+}
+
+.nav-btn.disabled {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+  </style>
+</head>
+<body>
+  <div class="mobile-top-bar">
+    <a href="../index.html">&larr; Course Index</a>
+    <span>Reference Document</span>
+  </div>
+
+  <header>
+    
+    <div class="lesson-meta">Architecture Reference Document #04</div>
+    <h1>Cypher & Knowledge Graph Modeling Cheat Sheet</h1>
+    <div class="subtitle">Standardized property graph patterns, syntax, and AML detection queries for Neo4j.</div>
+  
+  </header>
+
+  <main>
+    
+    <h2>1. The Property Graph Anatomy</h2>
+    <p>Unlike relational tables that link entities via foreign keys, a Property Graph stores explicit pointers:</p>
+    <ul>
+      <li><strong>Nodes:</strong> The entities (e.g., <code>(:Person)</code>, <code>(:Company)</code>, <code>(:Account)</code>, <code>(:Address)</code>).</li>
+      <li><strong>Labels:</strong> The type tags on nodes (can have multiple labels, e.g., <code>:Person:PEP:Sanctioned</code>).</li>
+      <li><strong>Relationships (Edges):</strong> Directed connections (e.g., <code>-[:BENEFICIAL_OWNER_OF]-&gt;</code>, <code>-[:TRANSFERRED]-&gt;</code>).</li>
+      <li><strong>Properties:</strong> Key-value metadata on both nodes and edges (e.g., <code>{amount: 50000, currency: "USD", timestamp: "2024-09-12"}</code>).</li>
+    </ul>
+
+    <h2>2. Core Cypher AML Query Patterns</h2>
+
+    <table class="cypher-table">
+      <thead>
+        <tr>
+          <th>Investigation Pattern</th>
+          <th>Cypher Query Pattern</th>
+          <th>What It Detects</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Direct Beneficial Ownership</strong></td>
+          <td><pre style="margin:0;"><code>MATCH (p:Person {id: 'P_901'})-[:BENEFICIAL_OWNER_OF]->(c:Company)
+RETURN p.name, c.name, c.jurisdiction</code></pre></td>
+          <td>Identifies all corporate entities controlled by a specific individual.</td>
+        </tr>
+        <tr>
+          <td><strong>Shared Physical Address (Shell Factory)</strong></td>
+          <td><pre style="margin:0;"><code>MATCH (c1:Company)-[:REGISTERED_AT]->(a:Address)<-[:REGISTERED_AT]-(c2:Company)
+WHERE c1 <> c2
+RETURN a.street, count(DISTINCT c1) AS shell_count
+ORDER BY shell_count DESC</code></pre></td>
+          <td>Uncovers registered office addresses hosting dozens of distinct shell companies.</td>
+        </tr>
+        <tr>
+          <td><strong>Multi-Hop Money Trails (1 to 5 Hops)</strong></td>
+          <td><pre style="margin:0;"><code>MATCH path = (origin:Account {id: 'ACC_START'})-[:TRANSFERRED*1..5]->(dest:Account)
+WHERE dest.is_sanctioned = true
+RETURN path</code></pre></td>
+          <td>Traces layered wire transfers across up to 5 intermediary mule accounts.</td>
+        </tr>
+        <tr>
+          <td><strong>Circular Transactions (Layering Rings)</strong></td>
+          <td><pre style="margin:0;"><code>MATCH path = (a:Account)-[:TRANSFERRED*2..6]->(a)
+RETURN [n in nodes(path) | n.id] AS ring, length(path) AS hops</code></pre></td>
+          <td>Detects money laundering loops where funds return to the originator after laundering.</td>
+        </tr>
+      </tbody>
+    </table>
+  
+  </main>
+
+  <div class="mobile-bottom-nav">
+    <a class="nav-btn" href="../index.html">&larr; Back to Dashboard</a>
+    <a class="nav-btn primary" href="../lessons/0001-unstructured-data-vectors-vs-graphs.html">Start Course &rarr;</a>
+  </div>
+</body>
+</html>

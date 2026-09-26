@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 0001: The Ingestion Dilemma — Vectors vs. Knowledge Graphs</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <style>
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin: 2rem 0;
+    }
+    .grid-col {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+    }
+    .grid-col h3 {
+      margin-top: 0;
+      color: var(--accent-dark);
+      border-bottom: 2px solid var(--accent-light);
+      padding-bottom: 0.4rem;
+    }
+    .scenario-box {
+      background: #fdf8f0;
+      border: 1px solid #fae3c6;
+      border-radius: 6px;
+      padding: 1.1rem;
+      margin: 1.5rem 0;
+    }
+    .scenario-title {
+      font-family: var(--font-sans);
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #9a5b13;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.3rem;
+    }
+    @media (max-width: 650px) {
+      .comparison-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="lesson-meta">Lesson 0001 &bull; Core Foundations</div>
+    <h1>The Unstructured Data Dilemma</h1>
+    <div class="subtitle">Why LLMs cannot hold everything in RAM, and the architectural divide between Vectors and Graphs.</div>
+  </header>
+
+  <main>
+    <p>As a DevOps and systems engineer, you are familiar with a classic tradeoff: you don't load an entire 500-gigabyte database table into active memory every time a web query comes in; you build <strong>indexes</strong> and query the right slice.</p>
+
+    <p>When working with Large Language Models (LLMs), engineers confront an identical challenge. In financial crime investigation, an anti-money laundering (AML) unit generates thousands of unstructured artifacts: Suspicious Activity Report (SAR) narrative PDFs, KYC corporate filings, court depositions, and internal analyst memos. How do we make this avalanche of text accessible to an LLM?</p>
+
+    <div class="scenario-box">
+      <div class="scenario-title">The Naive Temptation: "Just Stuff It In The Prompt"</div>
+      Modern models boast 1M+ token context windows. Why not just pass the entire archive to Gemini or GPT-4?
+      <ul style="margin: 0.75rem 0 0 1.25rem; font-size: 0.95rem;">
+        <li><strong>Latency:</strong> Processing 500k tokens takes 15–30 seconds per query, ruining real-time analysis.</li>
+        <li><strong>Cost:</strong> Paying $5 to $15 per investigator question drains cloud budgets within weeks.</li>
+        <li><strong>"Lost in the Middle":</strong> Models suffer from attention degradation when needle facts sit in giant document dumps.</li>
+      </ul>
+    </div>
+
+    <h2>The Architectural Solution: External Memory</h2>
+
+    <p>To provide unstructured data efficiently, we separate <strong>computation (the LLM)</strong> from <strong>storage (the index)</strong>. This pattern is called <strong>Retrieval-Augmented Generation (RAG)</strong>. When a user asks a question, our pipeline retrieves only the 3 to 10 most relevant pieces of context and feeds them into the model's immediate prompt.</p>
+
+    <p>However, unstructured data in financial crime contains two radically different kinds of information:</p>
+
+    <div class="comparison-grid">
+      <div class="grid-col">
+        <h3>1. The Vector Route (Fuzzy Semantics)</h3>
+        <p><strong>Mechanism:</strong> Slices text into chunks and converts each chunk into high-dimensional coordinates (an <em>embedding</em>). Retrieval finds chunks that share conceptual meaning.</p>
+        <p><strong>Ideal for:</strong> Fuzzy textual questions.</p>
+        <p><em>"Show me past investigator write-ups describing layering schemes using luxury watch purchases."</em></p>
+        <p><strong>Fatal Flaw:</strong> Blind to relational structure. It cannot trace a multi-hop path across five companies to find the ultimate beneficial owner.</p>
+      </div>
+
+      <div class="grid-col">
+        <h3>2. The Graph Route (Deterministic Topology)</h3>
+        <p><strong>Mechanism:</strong> Extracts entities (Person, Shell Corp, Bank Account) as <em>Nodes</em> and connections as directed <em>Edges</em> (<code>[:TRANSFERRED]</code>, <code>[:OWNS]</code>) in a database like <strong>Neo4j</strong>.</p>
+        <p><strong>Ideal for:</strong> Network & relational questions.</p>
+        <p><em>"Which shell companies share the same registered address in Cyprus and sent funds to Account 9901?"</em></p>
+        <p><strong>Fatal Flaw:</strong> Loses unstructured narrative nuance (e.g., subtle tone or investigator hunches) that was not turned into graph nodes.</p>
+      </div>
+    </div>
+
+    <h2>The Modern Synthesis: Hybrid / GraphRAG</h2>
+
+    <p>In mature financial crime systems, neither alone is sufficient. We build <strong>Hybrid Systems (GraphRAG)</strong>:</p>
+    <ol style="margin-left: 1.5rem; margin-bottom: 1.5rem;">
+      <li><strong>Vector Search</strong> retrieves relevant narrative context (e.g., police reports, interview memos).</li>
+      <li><strong>Graph Traversal (Cypher)</strong> reveals structural connections (e.g., hidden ownership syndicates, circular money flows).</li>
+      <li><strong>The LLM</strong> synthesizes both into an actionable briefing for the investigator.</li>
+    </ol>
+
+    <div class="callout tip">
+      <div class="callout-title">Architectural Rule of Thumb</div>
+      If the question hinges on <strong>"What does this text talk about?"</strong> &rarr; Reach for <strong>Vector Search</strong>.<br>
+      If the question hinges on <strong>"How are these entities connected across hops?"</strong> &rarr; Reach for a <strong>Knowledge Graph</strong>.
+    </div>
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz-card">
+      <div class="quiz-badge">Retrieval Practice</div>
+      <div class="quiz-question">
+        An investigator asks: <em>"Find all corporate entities sharing a registered address with Sanctioned Trader X, and list the accounts they sent wires to."</em> Which retrieval storage engine is fundamentally best suited for this task?
+      </div>
+
+      <div class="quiz-options">
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          High-dimensional vector database executing semantic nearest neighbor searches.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, true)">
+          Knowledge graph database executing deterministic multi-hop relationship traversals.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Pure relational SQL database running unindexed table scans.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Raw document cache injecting complete file texts directly.
+        </button>
+      </div>
+
+      <div id="quiz-feedback" class="quiz-feedback"></div>
+    </div>
+
+    <h2>Primary Source Recommendation</h2>
+    <p>Read the seminal paper introducing RAG to the world:</p>
+    <p>&bull; <a href="https://arxiv.org/abs/2005.11401" target="_blank" rel="noopener"><strong>Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks</strong> (Lewis et al., 2020)</a>.<br>
+    <em>Focus especially on Section 2 ("Method"), which clearly illustrates how the retriever and generator decouple knowledge storage from language fluency.</em></p>
+
+    <div class="callout">
+      <div class="callout-title">Teacher Reminder</div>
+      I am your teacher for this workspace. If any concept here feels ambiguous, ask me directly in the chat! We will tailor the next lesson based on your questions.
+    </div>
+  </main>
+
+  <footer>
+    <div><a href="../reference/glossary.html">&rarr; View Core Terminology Glossary</a></div>
+    <div>Lesson 0001 &bull; learn_ai</div>
+  </footer>
+
+  <script>
+    function checkAnswer(btn, isCorrect) {
+      const allButtons = document.querySelectorAll('.quiz-option-btn');
+      allButtons.forEach(b => {
+        b.disabled = true;
+        b.classList.remove('selected-correct', 'selected-incorrect');
+      });
+
+      const feedback = document.getElementById('quiz-feedback');
+      if (isCorrect) {
+        btn.classList.add('selected-correct');
+        feedback.className = 'quiz-feedback show-correct';
+        feedback.innerHTML = '<strong>Correct!</strong> This query requires traversing explicit edges (Entity &rarr; Address &rarr; Other Entities &rarr; Accounts). Vector search cannot trace exact multi-hop joins reliably; a knowledge graph (like Neo4j) is designed specifically for this topology.';
+      } else {
+        btn.classList.add('selected-incorrect');
+        feedback.className = 'quiz-feedback show-incorrect';
+        feedback.innerHTML = '<strong>Not quite.</strong> Notice that the investigator is asking about concrete relationships and paths (shared address &rarr; wire transfers). Vector similarity finds text snippets that "sound similar," but fails to reliably execute exact multi-hop relational joins.';
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 0011: Retrieval, Metadata Filtering & Cross-Encoder Re-Ranking</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <style>
+    .funnel-container {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1.75rem 0;
+      font-family: var(--font-mono);
+      font-size: 0.88rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="lesson-meta">Lesson 0011 &bull; Retrieval Engineering</div>
+    <h1>Retrieval, Metadata Filtering & Cross-Encoder Re-Ranking</h1>
+    <div class="subtitle">The two-stage retrieval funnel: Sifting 10 million chunks down to the 3 gold facts.</div>
+  </header>
+
+  <main>
+    <p>A naive RAG pipeline takes a query, runs vector search to grab the top 5 chunks, and dumps them straight into the LLM prompt. In real-world financial intelligence, this simple approach fails regularly.</p>
+
+    <p>Why? Because vector embeddings compress 500 words of nuance into a single 768-dimensional coordinate. It captures general topical similarity, but it frequently brings back chunks that are <em>topically adjacent</em> but <em>factually irrelevant</em>. Furthermore, it struggles with exact identifiers like SWIFT codes or passport numbers.</p>
+
+    <h2>The Production Two-Stage Retrieval Funnel</h2>
+    <p>Enterprise search systems use a multi-stage funnel that balances computational speed against deep linguistic precision:</p>
+
+    <div class="funnel-container">
+[10,000,000 Total Archived Chunks]
+             │
+             ▼  STAGE 1A: Metadata Pre-Filtering (Vertex AI Restricts)
+                &bull; Hard filters: jurisdiction == "CY" AND year >= 2023
+             ▼  STAGE 1B: Hybrid Fast Search (ANN Vector + BM25 Keywords)
+                &bull; Sub-5ms latency across candidate pool
+[Top 50 Broad Candidate Chunks Retrieved]
+             │
+             ▼  STAGE 2: Cross-Encoder Re-Ranking (Deep Semantic Attention)
+                &bull; Evaluates (Query + Document) jointly through transformer layers
+                &bull; Takes ~50ms on 50 candidates; scores true relevance
+[Top 3 Gold Evidence Chunks Injected into Prompt Context]
+    </div>
+
+    <h2>1. Metadata Pre-Filtering with Vertex AI Restricts</h2>
+    <p>Never do "post-filtering" (fetching 10 vectors and throwing away 8 because they are from the wrong country). You might end up with zero results!</p>
+    <p>In Vertex AI Vector Search, you use <strong>Restricts</strong>. During indexing, you attach allow/deny tokens to the JSONL record:</p>
+
+    <pre><code>{
+  "id": "chunk_9901",
+  "embedding": [...],
+  "restricts": [
+    { "namespace": "jurisdiction", "allow": ["CY", "EU"] },
+    { "namespace": "case_status", "allow": ["OPEN"] }
+  ]
+}</code></pre>
+
+    <p>At query time, the ScaNN engine restricts its proximity graph traversal exclusively to nodes matching those namespace tokens.</p>
+
+    <h2>2. Hybrid Search (Dense Vectors + BM25 Keywords)</h2>
+    <ul>
+      <li><strong>Dense Vectors:</strong> Excellent at conceptual synonyms (<em>"cash smurfing"</em> &harr; <em>"structuring below thresholds"</em>). Terrible at exact strings (<em>"IBAN GB29XIB1002"</em>).</li>
+      <li><strong>BM25 (Sparse Keyword):</strong> Inverted text index. Perfect at finding exact account numbers, tax IDs, and foreign names.</li>
+      <li><strong>Reciprocal Rank Fusion (RRF):</strong> Merges the ranked lists from both search engines into a balanced top-50 candidate set.</li>
+    </ul>
+
+    <h2>3. The Stage 2 Re-Ranker (Cross-Encoder)</h2>
+    <p>An embedding model is a <em>Bi-Encoder</em>: it encodes the query and the chunk separately, without them ever interacting. This makes it lightning-fast for indexing, but limits accuracy.</p>
+
+    <p>A <strong>Cross-Encoder Re-Ranker</strong> feeds both the query and the candidate chunk into a transformer model <em>together</em>. The model's attention mechanism directly compares every word in the query against every word in the document, calculating an exact relevance score (0.0 to 1.0). Running a cross-encoder on 10 million documents would be impossibly slow; running it on the top 50 candidates takes just 40ms.</p>
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz-card">
+      <div class="quiz-badge">Retrieval Practice</div>
+      <div class="quiz-question">
+        In an AML retrieval architecture, why is a Cross-Encoder re-ranker applied after initial vector retrieval?
+      </div>
+
+      <div class="quiz-options">
+        <button class="quiz-option-btn" onclick="checkAnswer(this, true)">
+          Cross-encoders evaluate query and document pairs jointly to refine accuracy.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Cross-encoders accelerate search speed by bypassing initial approximate vector indexing.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Cross-encoders encrypt sensitive bank transaction narratives directly inside cloud memory.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Cross-encoders compress high dimensional embedding vectors into compact relational tables.
+        </button>
+      </div>
+
+      <div id="quiz-feedback" class="quiz-feedback"></div>
+    </div>
+
+    <h2>Primary Source Recommendation</h2>
+    <p>Read the definitive paper on Cross-Encoder vs Bi-Encoder architectures:</p>
+    <p>&bull; <a href="https://arxiv.org/abs/1905.01969" target="_blank" rel="noopener"><strong>Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks</strong> — Reimers & Gurevych (EMNLP 2019)</a>.<br>
+    <em>Section 3 explains why Cross-Encoders achieve superior accuracy but cannot scale to large search collections without a Bi-Encoder first stage.</em></p>
+
+    <div class="callout">
+      <div class="callout-title">Teacher Reminder</div>
+      Now we have retrieved the 3 absolute best evidence chunks. How do we format and inject them into Gemini 1.5 to guarantee factual answers with zero hallucination? Find out in Lesson 12: <strong>Prompt Augmentation, Context Assembly & Gemini on Vertex AI</strong>.
+    </div>
+  </main>
+
+  <footer>
+    <div><a href="0010-bigquery-vector-search-vs-dedicated.html">&larr; Previous: Lesson 0010</a></div>
+    <div><a href="0012-prompt-augmentation-context-assembly-gemini.html">Next: Lesson 0012 &rarr;</a></div>
+  </footer>
+
+  <script>
+    function checkAnswer(btn, isCorrect) {
+      const allButtons = document.querySelectorAll('.quiz-option-btn');
+      allButtons.forEach(b => {
+        b.disabled = true;
+        b.classList.remove('selected-correct', 'selected-incorrect');
+      });
+
+      const feedback = document.getElementById('quiz-feedback');
+      if (isCorrect) {
+        btn.classList.add('selected-correct');
+        feedback.className = 'quiz-feedback show-correct';
+        feedback.innerHTML = '<strong>Correct!</strong> Bi-encoders (vector embeddings) encode queries and documents independently for fast index lookup. Cross-encoders examine them simultaneously, allowing full cross-attention to score precise factual relevance.';
+      } else {
+        btn.classList.add('selected-incorrect');
+        feedback.className = 'quiz-feedback show-incorrect';
+        feedback.innerHTML = '<strong>Not quite.</strong> Cross-encoders are too slow to search entire databases, but they provide deep joint attention on the top 50 candidates to filter out false positives before LLM injection.';
+      }
+    }
+  </script>
+</body>
+</html>

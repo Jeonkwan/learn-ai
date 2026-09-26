@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Lesson 0001: The Ingestion Dilemma — Vectors vs. Knowledge Graphs</title>
+  <style>
+
+:root {
+  --bg: #faf9f5;
+  --surface: #ffffff;
+  --text: #1d1d1f;
+  --text-muted: #6e6e73;
+  --border: #e5e5ea;
+  --accent: #0071e3;
+  --accent-light: #e8f2ff;
+  --accent-dark: #0056b3;
+  --success-bg: #eaf8ee;
+  --success-text: #1e7e34;
+  --danger-bg: #fdeeee;
+  --danger-text: #d93025;
+  --code-bg: #f2f2f7;
+  --code-border: #e5e5ea;
+  --font-serif: -apple-system-ui-serif, "Charter", "New York", Palatino, serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #000000;
+    --surface: #1c1c1e;
+    --text: #f2f2f7;
+    --text-muted: #8e8e93;
+    --border: #2c2c2e;
+    --accent: #2997ff;
+    --accent-light: #152942;
+    --accent-dark: #58a6ff;
+    --success-bg: #142e1b;
+    --success-text: #34c759;
+    --danger-bg: #321617;
+    --danger-text: #ff453a;
+    --code-bg: #1c1c1e;
+    --code-border: #38383a;
+  }
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-serif);
+  font-size: clamp(16px, 3.8vw, 18px);
+  line-height: 1.65;
+  padding: 1rem 1rem 5.5rem;
+  max-width: 680px;
+  margin: 0 auto;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (min-width: 768px) {
+  body {
+    max-width: 760px;
+    padding: 2rem 2rem 6.5rem;
+  }
+}
+
+.mobile-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.mobile-top-bar a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.lesson-meta {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+}
+
+h1 {
+  font-family: var(--font-sans);
+  font-size: clamp(1.45rem, 5vw, 2.05rem);
+  line-height: 1.22;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  font-size: clamp(0.92rem, 3.4vw, 1.05rem);
+  color: var(--text-muted);
+  font-style: italic;
+  margin-bottom: 1.5rem;
+  line-height: 1.45;
+}
+
+h2 {
+  font-family: var(--font-sans);
+  font-size: clamp(1.15rem, 3.8vw, 1.4rem);
+  font-weight: 600;
+  margin: 2rem 0 0.75rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.3rem;
+  letter-spacing: -0.01em;
+}
+
+h3 {
+  font-family: var(--font-sans);
+  font-size: clamp(1.02rem, 3.4vw, 1.15rem);
+  font-weight: 600;
+  margin: 1.4rem 0 0.45rem;
+}
+
+p {
+  margin-bottom: 1.15rem;
+}
+
+ul, ol {
+  margin-bottom: 1.25rem;
+  padding-left: 1.3rem;
+}
+
+li {
+  margin-bottom: 0.35rem;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background-color: var(--code-bg);
+  border: 1px solid var(--code-border);
+  padding: 0.15em 0.35em;
+  border-radius: 4px;
+  word-break: break-word;
+}
+
+pre {
+  background-color: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-radius: 8px;
+  padding: 0.9rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 1.1rem 0 1.4rem;
+  font-family: var(--font-mono);
+  font-size: clamp(0.75rem, 2.7vw, 0.84rem);
+  line-height: 1.45;
+}
+
+pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: inherit;
+  word-break: normal;
+}
+
+.callout {
+  background-color: var(--surface);
+  border-left: 4px solid var(--accent);
+  border-top: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 1rem;
+  margin: 1.4rem 0;
+  border-radius: 0 8px 8px 0;
+}
+
+.callout.tip {
+  border-left-color: var(--success-text);
+}
+
+.callout.warning {
+  border-left-color: #f59e0b;
+}
+
+.callout-title {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.3rem;
+}
+
+.comparison-grid, .service-card-grid, .algo-compare-grid, .algo-grid, .compare-rag-grid, .metric-grid, .scramble-box {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.9rem;
+  margin: 1.4rem 0;
+}
+
+@media (min-width: 641px) {
+  .comparison-grid, .service-card-grid, .algo-compare-grid, .algo-grid, .compare-rag-grid, .metric-grid, .scramble-box {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.grid-col, .service-card, .algo-card, .algo-box, .rag-col, .metric-card, .scramble-col, .math-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.infra-diagram, .hierarchy-box, .funnel-container, .graph-schema-box, .extraction-flow, .er-diagram, .router-diagram, .blueprint-box, .prompt-template-box, .artifact-snippet, .cypher-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.9rem;
+  margin: 1.25rem 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  font-family: var(--font-mono);
+  font-size: clamp(0.72rem, 2.5vw, 0.82rem);
+  line-height: 1.42;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.25rem 0;
+  font-family: var(--font-sans);
+  font-size: clamp(0.8rem, 2.8vw, 0.88rem);
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+table th, table td {
+  border: 1px solid var(--border);
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+}
+
+table th {
+  background: var(--code-bg);
+  font-weight: 600;
+}
+
+.quiz-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.2rem;
+  margin: 1.8rem 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.quiz-badge {
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: var(--accent-light);
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+}
+
+.quiz-question {
+  font-family: var(--font-sans);
+  font-size: clamp(0.92rem, 3.6vw, 1.02rem);
+  font-weight: 600;
+  line-height: 1.4;
+  margin-bottom: 0.9rem;
+  color: var(--text);
+}
+
+.quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.quiz-option-btn {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  text-align: left;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 0.9rem;
+  font-family: var(--font-sans);
+  font-size: clamp(0.82rem, 3vw, 0.88rem);
+  line-height: 1.4;
+  color: var(--text);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.1s ease, background 0.15s ease;
+}
+
+.quiz-option-btn:active {
+  transform: scale(0.98);
+}
+
+.quiz-option-btn.selected-correct {
+  background: var(--success-bg);
+  border-color: var(--success-text);
+  color: var(--success-text);
+  font-weight: 600;
+}
+
+.quiz-option-btn.selected-incorrect {
+  background: var(--danger-bg);
+  border-color: var(--danger-text);
+  color: var(--danger-text);
+}
+
+.quiz-feedback {
+  display: none;
+  font-family: var(--font-sans);
+  font-size: 0.86rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: 8px;
+  margin-top: 0.9rem;
+  line-height: 1.42;
+}
+
+.quiz-feedback.show-correct {
+  display: block;
+  background: var(--success-bg);
+  color: var(--success-text);
+}
+
+.quiz-feedback.show-incorrect {
+  display: block;
+  background: var(--danger-bg);
+  color: var(--danger-text);
+}
+
+.mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(250, 249, 245, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  padding: 0.65rem 1rem max(0.65rem, env(safe-area-inset-bottom));
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  z-index: 1000;
+}
+
+@media (prefers-color-scheme: dark) {
+  .mobile-bottom-nav {
+    background: rgba(18, 18, 20, 0.92);
+  }
+}
+
+.nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  touch-action: manipulation;
+}
+
+.nav-btn:active {
+  transform: scale(0.96);
+}
+
+.nav-btn.primary {
+  background: var(--accent);
+  color: #ffffff;
+  border-color: var(--accent);
+}
+
+.nav-btn.disabled {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+  </style>
+</head>
+<body>
+  <div class="mobile-top-bar">
+    <a href="../index.html">&larr; Course Index</a>
+    <span>Lesson 01 of 20</span>
+  </div>
+
+  <header>
+    
+    <div class="lesson-meta">Lesson 0001 &bull; Core Foundations</div>
+    <h1>The Unstructured Data Dilemma</h1>
+    <div class="subtitle">Why LLMs cannot hold everything in RAM, and the architectural divide between Vectors and Graphs.</div>
+  
+  </header>
+
+  <main>
+    
+    <p>As a DevOps and systems engineer, you are familiar with a classic tradeoff: you don't load an entire 500-gigabyte database table into active memory every time a web query comes in; you build <strong>indexes</strong> and query the right slice.</p>
+
+    <p>When working with Large Language Models (LLMs), engineers confront an identical challenge. In financial crime investigation, an anti-money laundering (AML) unit generates thousands of unstructured artifacts: Suspicious Activity Report (SAR) narrative PDFs, KYC corporate filings, court depositions, and internal analyst memos. How do we make this avalanche of text accessible to an LLM?</p>
+
+    <div class="scenario-box">
+      <div class="scenario-title">The Naive Temptation: "Just Stuff It In The Prompt"</div>
+      Modern models boast 1M+ token context windows. Why not just pass the entire archive to Gemini or GPT-4?
+      <ul style="margin: 0.75rem 0 0 1.25rem; font-size: 0.95rem;">
+        <li><strong>Latency:</strong> Processing 500k tokens takes 15–30 seconds per query, ruining real-time analysis.</li>
+        <li><strong>Cost:</strong> Paying $5 to $15 per investigator question drains cloud budgets within weeks.</li>
+        <li><strong>"Lost in the Middle":</strong> Models suffer from attention degradation when needle facts sit in giant document dumps.</li>
+      </ul>
+    </div>
+
+    <h2>The Architectural Solution: External Memory</h2>
+
+    <p>To provide unstructured data efficiently, we separate <strong>computation (the LLM)</strong> from <strong>storage (the index)</strong>. This pattern is called <strong>Retrieval-Augmented Generation (RAG)</strong>. When a user asks a question, our pipeline retrieves only the 3 to 10 most relevant pieces of context and feeds them into the model's immediate prompt.</p>
+
+    <p>However, unstructured data in financial crime contains two radically different kinds of information:</p>
+
+    <div class="comparison-grid">
+      <div class="grid-col">
+        <h3>1. The Vector Route (Fuzzy Semantics)</h3>
+        <p><strong>Mechanism:</strong> Slices text into chunks and converts each chunk into high-dimensional coordinates (an <em>embedding</em>). Retrieval finds chunks that share conceptual meaning.</p>
+        <p><strong>Ideal for:</strong> Fuzzy textual questions.</p>
+        <p><em>"Show me past investigator write-ups describing layering schemes using luxury watch purchases."</em></p>
+        <p><strong>Fatal Flaw:</strong> Blind to relational structure. It cannot trace a multi-hop path across five companies to find the ultimate beneficial owner.</p>
+      </div>
+
+      <div class="grid-col">
+        <h3>2. The Graph Route (Deterministic Topology)</h3>
+        <p><strong>Mechanism:</strong> Extracts entities (Person, Shell Corp, Bank Account) as <em>Nodes</em> and connections as directed <em>Edges</em> (<code>[:TRANSFERRED]</code>, <code>[:OWNS]</code>) in a database like <strong>Neo4j</strong>.</p>
+        <p><strong>Ideal for:</strong> Network & relational questions.</p>
+        <p><em>"Which shell companies share the same registered address in Cyprus and sent funds to Account 9901?"</em></p>
+        <p><strong>Fatal Flaw:</strong> Loses unstructured narrative nuance (e.g., subtle tone or investigator hunches) that was not turned into graph nodes.</p>
+      </div>
+    </div>
+
+    <h2>The Modern Synthesis: Hybrid / GraphRAG</h2>
+
+    <p>In mature financial crime systems, neither alone is sufficient. We build <strong>Hybrid Systems (GraphRAG)</strong>:</p>
+    <ol style="margin-left: 1.5rem; margin-bottom: 1.5rem;">
+      <li><strong>Vector Search</strong> retrieves relevant narrative context (e.g., police reports, interview memos).</li>
+      <li><strong>Graph Traversal (Cypher)</strong> reveals structural connections (e.g., hidden ownership syndicates, circular money flows).</li>
+      <li><strong>The LLM</strong> synthesizes both into an actionable briefing for the investigator.</li>
+    </ol>
+
+    <div class="callout tip">
+      <div class="callout-title">Architectural Rule of Thumb</div>
+      If the question hinges on <strong>"What does this text talk about?"</strong> &rarr; Reach for <strong>Vector Search</strong>.<br>
+      If the question hinges on <strong>"How are these entities connected across hops?"</strong> &rarr; Reach for a <strong>Knowledge Graph</strong>.
+    </div>
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz-card">
+      <div class="quiz-badge">Retrieval Practice</div>
+      <div class="quiz-question">
+        An investigator asks: <em>"Find all corporate entities sharing a registered address with Sanctioned Trader X, and list the accounts they sent wires to."</em> Which retrieval storage engine is fundamentally best suited for this task?
+      </div>
+
+      <div class="quiz-options">
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          High-dimensional vector database executing semantic nearest neighbor searches.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, true)">
+          Knowledge graph database executing deterministic multi-hop relationship traversals.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Pure relational SQL database running unindexed table scans.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Raw document cache injecting complete file texts directly.
+        </button>
+      </div>
+
+      <div id="quiz-feedback" class="quiz-feedback"></div>
+    </div>
+
+    <h2>Primary Source Recommendation</h2>
+    <p>Read the seminal paper introducing RAG to the world:</p>
+    <p>&bull; <a href="https://arxiv.org/abs/2005.11401" target="_blank" rel="noopener"><strong>Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks</strong> (Lewis et al., 2020)</a>.<br>
+    <em>Focus especially on Section 2 ("Method"), which clearly illustrates how the retriever and generator decouple knowledge storage from language fluency.</em></p>
+
+    <div class="callout">
+      <div class="callout-title">Teacher Reminder</div>
+      I am your teacher for this workspace. If any concept here feels ambiguous, ask me directly in the chat! We will tailor the next lesson based on your questions.
+    </div>
+  
+  </main>
+
+  <div class="mobile-bottom-nav">
+    <a class="nav-btn disabled" href="#">&larr; Prev</a>
+    <a class="nav-btn" href="../index.html">📚 Index</a>
+    <a class="nav-btn primary" href="0002-vector-pipeline-chunking-embeddings-ann.html">Next &rarr;</a>
+  </div>
+
+  <script>
+
+    function checkAnswer(btn, isCorrect) {
+      const allButtons = document.querySelectorAll('.quiz-option-btn');
+      allButtons.forEach(b => {
+        b.disabled = true;
+        b.classList.remove('selected-correct', 'selected-incorrect');
+      });
+
+      const feedback = document.getElementById('quiz-feedback');
+      if (isCorrect) {
+        btn.classList.add('selected-correct');
+        feedback.className = 'quiz-feedback show-correct';
+        feedback.innerHTML = '<strong>Correct!</strong> This query requires traversing explicit edges (Entity &rarr; Address &rarr; Other Entities &rarr; Accounts). Vector search cannot trace exact multi-hop joins reliably; a knowledge graph (like Neo4j) is designed specifically for this topology.';
+      } else {
+        btn.classList.add('selected-incorrect');
+        feedback.className = 'quiz-feedback show-incorrect';
+        feedback.innerHTML = '<strong>Not quite.</strong> Notice that the investigator is asking about concrete relationships and paths (shared address &rarr; wire transfers). Vector similarity finds text snippets that "sound similar," but fails to reliably execute exact multi-hop relational joins.';
+      }
+    }
+  
+  </script>
+</body>
+</html>

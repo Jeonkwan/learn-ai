@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reference: Vector Chunking & Indexing Architecture</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <style>
+    table.spec-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0 2rem;
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+    }
+    table.spec-table th, table.spec-table td {
+      border: 1px solid var(--border);
+      padding: 0.75rem 1rem;
+      text-align: left;
+    }
+    table.spec-table th {
+      background-color: var(--code-bg);
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    table.spec-table tr:nth-child(even) td {
+      background-color: #fafbfc;
+    }
+    .metric-badge {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="lesson-meta">Architecture Reference Document #02</div>
+    <h1>Vector Pipelines: Chunking, Embeddings & ANN Indexing</h1>
+    <div class="subtitle">A quick reference on chunking trade-offs, vector geometries, and Google Cloud Vertex AI Vector Search.</div>
+  </header>
+
+  <main>
+    <h2>1. Document Chunking Strategies</h2>
+    <p>Chunking controls the granularity of information injected into the LLM context window. Choosing the wrong strategy leads to either loss of context (chunks too small) or diluted embeddings (chunks too big).</p>
+
+    <table class="spec-table">
+      <thead>
+        <tr>
+          <th>Strategy</th>
+          <th>Typical Parameters</th>
+          <th>Best Used For</th>
+          <th>Trade-offs & Failure Modes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Fixed-Size Window</strong></td>
+          <td>512 tokens / 50 overlap</td>
+          <td>Quick prototyping, uniform tabular text</td>
+          <td>Cuts sentences mid-thought; fractures semantic relationships across chunk boundaries.</td>
+        </tr>
+        <tr>
+          <td><strong>Recursive Character</strong></td>
+          <td>Separators: <code>["\n\n", "\n", " ", ""]</code></td>
+          <td>Investigator narratives, SAR reports, legal filings</td>
+          <td>Industry standard. Respects paragraphs and sentences before falling back to arbitrary character splits.</td>
+        </tr>
+        <tr>
+          <td><strong>Semantic Chunking</strong></td>
+          <td>Dynamic cosine distance threshold across adjacent sentences</td>
+          <td>Unstructured depositions, conversational transcripts</td>
+          <td>Computationally expensive; triggers multiple embedding calls during ingestion.</td>
+        </tr>
+        <tr>
+          <td><strong>Hierarchical / Parent-Child</strong></td>
+          <td>Child: 128 tokens<br>Parent: 1024 tokens</td>
+          <td>Complex regulatory guidelines, dense case law</td>
+          <td>Best retrieval precision: searches small child chunks, but injects the larger parent passage into the LLM.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>2. Vector Embeddings & Distance Metrics</h2>
+    <p>An embedding model encodes a text chunk into a fixed-length coordinate array (e.g. 768 dimensions for <code>text-embedding-004</code> or 1536 for OpenAI <code>text-embedding-3-small</code>).</p>
+
+    <table class="spec-table">
+      <thead>
+        <tr>
+          <th>Distance Metric</th>
+          <th>Mathematical Formula</th>
+          <th>When to Select</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Cosine Similarity</strong></td>
+          <td><code>cos(&theta;) = (A &bull; B) / (||A|| &times; ||B||)</code></td>
+          <td>Standard for text retrieval. Measures the directional angle, ignoring text length discrepancies.</td>
+        </tr>
+        <tr>
+          <td><strong>Dot Product (Inner Product)</strong></td>
+          <td><code>A &bull; B = &sum; (A<sub>i</sub> &times; B<sub>i</sub>)</code></td>
+          <td>Use when embeddings are unit-normalized (length = 1.0). Computationally faster than full cosine division.</td>
+        </tr>
+        <tr>
+          <td><strong>Euclidean Distance (L2)</strong></td>
+          <td><code>d = &radic;&sum;(A<sub>i</sub> - B<sub>i</sub>)<sup>2</sup></code></td>
+          <td>Used when geometric magnitude matters (less common in NLP, common in image/spatial models).</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>3. ANN Indexing Engines (GCP / Vertex AI vs HNSW)</h2>
+
+    <table class="spec-table">
+      <thead>
+        <tr>
+          <th>Algorithm / Engine</th>
+          <th>Core Mechanism</th>
+          <th>DevOps / Infrastructure Characteristics</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>ScaNN</strong><br>(Google Vertex AI Vector Search)</td>
+          <td>Quantization with Score-Aware Loss + Anisotropic Vector Quantization</td>
+          <td>Massive QPS, sub-5ms p99 latency, native serverless or dedicated endpoints in GCP. Optimized for extreme scale (millions to billions).</td>
+        </tr>
+        <tr>
+          <td><strong>HNSW</strong><br>(Hierarchical Navigable Small World)</td>
+          <td>Multi-layer proximity graphs (similar to skip-lists in graph form)</td>
+          <td>High recall (&gt;98%), fast queries. Memory-intensive because the entire graph structure must reside in RAM. Default in Qdrant, Milvus, and pgvector.</td>
+        </tr>
+        <tr>
+          <td><strong>IVF-PQ</strong><br>(Inverted File + Product Quantization)</td>
+          <td>K-means clustering + 8-bit vector compression</td>
+          <td>Drastically cuts memory consumption by 80–90%, but sacrifices a small amount of recall accuracy.</td>
+        </tr>
+      </tbody>
+    </table>
+  </main>
+
+  <footer>
+    <div><a href="../lessons/0002-vector-pipeline-chunking-embeddings-ann.html">&larr; Go to Lesson 0002</a></div>
+    <div>learn_ai architecture workspace</div>
+  </footer>
+</body>
+</html>

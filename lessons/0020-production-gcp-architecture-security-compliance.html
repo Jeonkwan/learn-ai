@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 0020: Production GCP Architecture, Security & Compliance</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <style>
+    .blueprint-box {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1.75rem 0;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      line-height: 1.5;
+      overflow-x: auto;
+    }
+    .metric-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      margin: 1.75rem 0;
+    }
+    .metric-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+    }
+    @media (max-width: 650px) {
+      .metric-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="lesson-meta">Lesson 0020 &bull; Production Architecture & Operations</div>
+    <h1>Production GCP Architecture, Security & Compliance</h1>
+    <div class="subtitle">The complete DevOps blueprint: Event-driven ingestion, VPC-SC perimeters, and RAGAS audit evaluation.</div>
+  </header>
+
+  <main>
+    <p>Congratulations on reaching the final lesson of our curriculum! In this capstone, we bring together every concept you have learned—parsing, chunking, embeddings, ScaNN indexing, property graphs, and query routing—into an auditable, enterprise-grade cloud blueprint on Google Cloud.</p>
+
+    <h2>The End-to-End Enterprise Production Blueprint</h2>
+
+    <div class="blueprint-box">
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                        SECURE BANKING VPC SERVICE CONTROLS PERIMETER                   │
+│                                                                                        │
+│  [1. INGESTION]                                                                        │
+│   Bank Dossiers / Scans ──► Cloud Storage Bucket (gs://aml-evidence-drop/)              │
+│                                   │ (GCS Object Finalize Event)                        │
+│                                   ▼                                                    │
+│                             [Eventarc]                                                 │
+│                                   │                                                    │
+│                                   ▼                                                    │
+│  [2. PROCESSING]            [Cloud Run Worker]                                         │
+│                                   ├──► Cloud Document AI (OCR & Table Extraction)      │
+│                                   ├──► Chunking & Metadata Tagging                     │
+│                                   ├──► Vertex AI Embeddings (text-embedding-004)       │
+│                                   └──► Vertex AI Gemini 1.5 (Structured Entity Triples)│
+│                                                                                        │
+│  [3. STORAGE]                     │                                                    │
+│         ┌─────────────────────────┴────────────────────────┐                           │
+│         ▼                                                  ▼                           │
+│   Vertex AI Vector Search                           Neo4j AuraDB on GCP                │
+│   (ScaNN High-Scale Vector Index)                   (Property Graph Network)           │
+│   Accessible via Private Service Connect             Accessible via PSC Subnet         │
+│                                                                                        │
+│  [4. SERVING]                                                                          │
+│   Compliance Web UI ──► [Cloud Run Query Gateway & Router]                             │
+│                                   │                                                    │
+│                                   ├──► Vector Search (Semantic Narratives)             │
+│                                   ├──► Neo4j Cypher (Multi-hop Ownership Chains)       │
+│                                   └──► Vertex AI Gemini 1.5 (Prompt Grounding & SAR)   │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+    </div>
+
+    <h2>Security & Banking Compliance Invariants</h2>
+    <p>As a DevOps engineer operating in regulated banking environments, your infrastructure must satisfy strict audit controls:</p>
+
+    <ul>
+      <li><strong>VPC Service Controls (VPC-SC):</strong> Creates a cryptographic security perimeter around your Cloud Storage buckets, Document AI processors, and Vertex AI endpoints. Even if an attacker gains stolen IAM credentials, they cannot exfiltrate banking records outside the perimeter.</li>
+      <li><strong>Private Service Connect (PSC):</strong> Eliminates public IP exposure. All communication between Cloud Run, Vertex AI Vector Search, and Neo4j stays strictly inside private VPC subnets.</li>
+      <li><strong>Customer-Managed Encryption Keys (CMEK):</strong> All vectors, graph nodes, and documents are encrypted at rest using keys managed in Google Cloud KMS.</li>
+      <li><strong>Immutable Audit Trails:</strong> Every query submitted by an investigator, including the retrieved chunks and generated response, is streamed to BigQuery with full tamper-evident Cloud Audit Logs for federal regulators (FinCEN/OCC).</li>
+    </ul>
+
+    <h2>Evaluating Retrieval Quality: The RAGAS Framework</h2>
+    <p>How do you know if your pipeline is actually working or if retrieval quality is degrading over time? Never rely on manual vibe checks. Production systems automate evaluation using <strong>RAGAS (Retrieval Augmented Generation Assessment)</strong>:</p>
+
+    <div class="metric-grid">
+      <div class="metric-card">
+        <h3>1. Faithfulness (Zero Hallucination)</h3>
+        <p>Measures whether every single statement made by the LLM is mathematically grounded in the retrieved evidence chunks. Target: <strong>&gt; 0.98</strong>.</p>
+      </div>
+
+      <div class="metric-card">
+        <h3>2. Answer Relevance</h3>
+        <p>Measures whether the generated brief directly addresses the investigator's question without extraneous filler. Target: <strong>&gt; 0.90</strong>.</p>
+      </div>
+
+      <div class="metric-card">
+        <h3>3. Context Precision (Signal-to-Noise)</h3>
+        <p>Evaluates whether your vector index and re-ranker placed the true gold chunks at the top of the context window. Target: <strong>&gt; 0.85</strong>.</p>
+      </div>
+
+      <div class="metric-card">
+        <h3>4. Context Recall</h3>
+        <p>Verifies whether all facts needed to answer the question were successfully retrieved from storage. Target: <strong>&gt; 0.90</strong>.</p>
+      </div>
+    </div>
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz-card">
+      <div class="quiz-badge">Retrieval Practice</div>
+      <div class="quiz-question">
+        In an enterprise banking AI architecture on GCP, what is the primary role of VPC Service Controls?
+      </div>
+
+      <div class="quiz-options">
+        <button class="quiz-option-btn" onclick="checkAnswer(this, true)">
+          Prevents unauthorized data exfiltration across boundaries by establishing secure cloud perimeters.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Accelerates vector embedding generation by provisioning dedicated GPU machine learning instances.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Converts unstructured PDF documents into high dimensional mathematical floating point coordinates.
+        </button>
+        <button class="quiz-option-btn" onclick="checkAnswer(this, false)">
+          Generates synthetic training datasets to evaluate downstream natural language reasoning models.
+        </button>
+      </div>
+
+      <div id="quiz-feedback" class="quiz-feedback"></div>
+    </div>
+
+    <h2>Primary Source Recommendation</h2>
+    <p>Read the definitive paper on RAG evaluation:</p>
+    <p>&bull; <a href="https://arxiv.org/abs/2309.15217" target="_blank" rel="noopener"><strong>RAGAS: Automated Evaluation of Retrieval Augmented Generation</strong> — Es et al. (EACL 2024)</a>.<br>
+    <em>Learn how reference-free evaluation metrics measure faithfulness and context precision in production CI/CD test pipelines.</em></p>
+
+    <div class="callout tip">
+      <div class="callout-title">Curriculum Complete!</div>
+      You have completed all 20 lessons of the curriculum! You now possess a comprehensive, end-to-end architectural understanding of how unstructured data is ingested, chunked, embedded, indexed, modeled as graphs, retrieved, and governed on Google Cloud.<br><br>
+      As your teacher, I am always here to answer follow-up questions, review architecture diagrams, or write proof-of-concept scripts whenever you're ready!
+    </div>
+  </main>
+
+  <footer>
+    <div><a href="0019-hybrid-query-routing-unified-retrieval.html">&larr; Previous: Lesson 0019</a></div>
+    <div><a href="../reference/glossary.html">Reference Glossary</a> &bull; <a href="../MISSION.md">Mission Complete &check;</a></div>
+  </footer>
+
+  <script>
+    function checkAnswer(btn, isCorrect) {
+      const allButtons = document.querySelectorAll('.quiz-option-btn');
+      allButtons.forEach(b => {
+        b.disabled = true;
+        b.classList.remove('selected-correct', 'selected-incorrect');
+      });
+
+      const feedback = document.getElementById('quiz-feedback');
+      if (isCorrect) {
+        btn.classList.add('selected-correct');
+        feedback.className = 'quiz-feedback show-correct';
+        feedback.innerHTML = '<strong>Correct!</strong> VPC Service Controls establish a perimeter around multi-tenant Google Cloud API services (GCS, Document AI, Vertex AI), preventing data exfiltration even in the event of compromised credentials.';
+      } else {
+        btn.classList.add('selected-incorrect');
+        feedback.className = 'quiz-feedback show-incorrect';
+        feedback.innerHTML = '<strong>Not quite.</strong> VPC Service Controls are designed to prevent data leakage and exfiltration by locking down GCP services inside a trusted security perimeter.';
+      }
+    }
+  </script>
+</body>
+</html>
