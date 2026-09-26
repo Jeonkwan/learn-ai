@@ -244,6 +244,226 @@ pre code {
   line-height: 1.42;
 }
 
+/* Modern Responsive Architecture Diagram */
+.gcp-arch-diagram {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem 0.8rem;
+  margin: 1.5rem 0;
+}
+.arch-layer {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.9rem 0.8rem;
+}
+.layer-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.8rem;
+}
+.layer-badge {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  background: var(--accent-light);
+  color: var(--accent);
+  border: 1px solid var(--border);
+}
+.layer-header h4 {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.layer-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+@media (min-width: 600px) {
+  .layer-flow {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+.arch-node {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 0.85rem;
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+.arch-node.highlight {
+  border-color: var(--accent);
+}
+.arch-node.wide {
+  width: 100%;
+}
+.arch-node.final {
+  border-color: #8b5cf6;
+}
+.node-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.node-content {
+  flex: 1;
+  min-width: 0;
+}
+.node-content strong {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  color: var(--text);
+  margin-bottom: 0.15rem;
+}
+.node-content code {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--accent);
+}
+.node-content p {
+  margin: 0.3rem 0 0;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+.tech-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--success-text);
+  background: var(--success-bg);
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+}
+.flow-arrow {
+  text-align: center;
+  font-size: 1.2rem;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+@media (max-width: 599px) {
+  .flow-arrow {
+    transform: rotate(90deg);
+  }
+}
+.layer-connector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem 0;
+  color: var(--text-muted);
+}
+.connector-arrow {
+  font-size: 1.15rem;
+  line-height: 1;
+  color: var(--accent);
+  font-weight: bold;
+}
+.connector-label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  margin-top: 0.15rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+.layer-top-node {
+  margin-bottom: 0.75rem;
+}
+.layer-fork-label {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 0.65rem 0 0.45rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.layer-branches {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+@media (min-width: 600px) {
+  .layer-branches {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.branch-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.branch-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-bottom: 0.35rem;
+}
+.branch-header strong {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  color: var(--text);
+}
+.branch-badge {
+  display: inline-block;
+  align-self: flex-start;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+}
+.branch-badge.live {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+.branch-badge.batch {
+  background: #fef7e0;
+  color: #b06000;
+}
+@media (prefers-color-scheme: dark) {
+  .branch-badge.batch {
+    background: #3e2e0e;
+    color: #f9ab00;
+  }
+}
+.branch-desc {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  line-height: 1.35;
+  color: var(--text-muted);
+  margin: 0 0 0.5rem;
+}
+.branch-specs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  border-top: 1px dashed var(--border);
+  padding-top: 0.45rem;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;

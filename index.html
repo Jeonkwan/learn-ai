@@ -5,6 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Architecting Unstructured Data & Knowledge Retrieval for LLMs</title>
   <link rel="stylesheet" href="assets/style.css">
+  <script>
+    (function() {
+      try {
+        var params = new URLSearchParams(window.location.search);
+        if (params.get('view') === 'desktop') {
+          sessionStorage.setItem('prefer-desktop', 'true');
+          return;
+        }
+        if (sessionStorage.getItem('prefer-desktop') === 'true') {
+          return;
+        }
+        var isMobile = (window.innerWidth <= 768) || /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile) {
+          window.location.replace("mobile/index.html");
+        }
+      } catch (e) {}
+    })();
+  </script>
   <style>
     .course-index {
       margin: 2rem 0;
