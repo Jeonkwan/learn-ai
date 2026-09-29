@@ -6,16 +6,7 @@
   <title>Lesson 0019: Hybrid Query Routing & Unified Retrieval Engine</title>
   <link rel="stylesheet" href="../assets/style.css">
   <style>
-    .router-diagram {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 1.5rem;
-      margin: 1.75rem 0;
-      font-family: var(--font-mono);
-      font-size: 0.85rem;
-      line-height: 1.5;
-    }
+    /* Custom lesson-specific tweaks if needed */
   </style>
 </head>
 <body>
@@ -37,28 +28,70 @@
 
     <h2>The Intelligent Query Router</h2>
 
-    <div class="router-diagram">
-                       [ Investigator Query ]
-                                  │
-                                  ▼
-                 [ Fast Intent Router / Classifier ]
-         (Cloud Run Service: Gemini 1.5 Flash Function Calling)
-                                  │
-        ┌─────────────────────────┼─────────────────────────┐
-        ▼                         ▼                         ▼
- [ PATH 1: SEMANTIC ]      [ PATH 2: RELATIONAL ]    [ PATH 3: HYBRID ]
-  Vertex AI Vector Search   Neo4j Knowledge Graph     1. Vector search yields
-  Finds matching narrative  Generates & runs Cypher      suspect nodes.
-  chunks.                   traversal path.           2. Graph traverses hops
-        │                         │                      from those nodes.
-        └─────────────────────────┼─────────────────────────┘
-                                  ▼
-                    [ Unified Context Assembler ]
-        Fuses narrative evidence snippets + graph relationship paths
-                                  │
-                                  ▼
-                      [ Vertex AI Gemini 1.5 ]
-               Generates complete, verified intelligence brief
+    <div class="router-pipeline-visual">
+      <!-- Step 1: User Query -->
+      <div class="router-query-box">
+        <strong>Input Investigation Query</strong>
+        <p>&ldquo;Show me all suspicious wire transfers connected to suspects who discussed yacht kickbacks.&rdquo;</p>
+      </div>
+
+      <div class="tier-connector">
+        <span class="connector-arrow">&darr;</span>
+      </div>
+
+      <!-- Step 2: Gateway Classifier -->
+      <div class="router-gateway-card">
+        <span class="gateway-badge">Fast Intent Router / Classifier (&lt; 150ms)</span>
+        <h4>Cloud Run Gateway &bull; Gemini 1.5 Flash</h4>
+        <p>Uses tool/function calling to classify query semantics and determine optimal backend route.</p>
+      </div>
+
+      <div class="tier-connector">
+        <span class="connector-arrow">&darr;</span>
+        <span class="connector-badge">Dispatches Execution Strategy</span>
+      </div>
+
+      <!-- Step 3: 3 Execution Paths -->
+      <div class="router-paths-grid">
+        <div class="path-card">
+          <span class="path-badge p1">Path 1: Semantic</span>
+          <strong>Vertex AI Vector Search</strong>
+          <p>Scans dense narrative embeddings for conceptual matches (e.g. <em>&ldquo;yacht kickbacks&rdquo;</em>).</p>
+        </div>
+
+        <div class="path-card">
+          <span class="path-badge p2">Path 2: Relational</span>
+          <strong>Neo4j Knowledge Graph</strong>
+          <p>Compiles natural query into Cypher to traverse multi-hop ownership &amp; wire rings.</p>
+        </div>
+
+        <div class="path-card">
+          <span class="path-badge p3">Path 3: Hybrid (Two-Phase)</span>
+          <strong>Fused Retrieval Pipeline</strong>
+          <p>1. Vectors locate suspect anchor nodes.<br>2. Graph expands 2 hops from those seeds.</p>
+        </div>
+      </div>
+
+      <div class="tier-connector">
+        <span class="connector-arrow">&darr;</span>
+        <span class="connector-badge">Reciprocal Rank Fusion (RRF)</span>
+      </div>
+
+      <!-- Step 4: Fusion -->
+      <div class="fusion-card">
+        <strong>Unified Context Assembler</strong>
+        <span>Fuses textual evidence snippets + Cypher graph paths into unified citation context</span>
+      </div>
+
+      <div class="tier-connector">
+        <span class="connector-arrow">&darr;</span>
+      </div>
+
+      <!-- Step 5: Gemini 1.5 Synthesis -->
+      <div class="final-gen-card">
+        <strong>Vertex AI Gemini 1.5 (Pro / Flash)</strong>
+        <span>Synthesizes grounded, auditable SAR intelligence report with line-item citations</span>
+      </div>
     </div>
 
     <h2>How the Router Classifies Queries</h2>

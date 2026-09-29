@@ -6,15 +6,7 @@
   <title>Lesson 0014: Extracting Graphs from Unstructured Text with Gemini</title>
   <link rel="stylesheet" href="../assets/style.css">
   <style>
-    .extraction-flow {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 1.25rem;
-      margin: 1.5rem 0;
-      font-family: var(--font-mono);
-      font-size: 0.85rem;
-    }
+    /* Custom lesson-specific tweaks if needed */
   </style>
 </head>
 <body>
@@ -32,12 +24,41 @@
     <h2>The Knowledge Extraction Triple: (Subject, Predicate, Object)</h2>
     <p>Every relationship in a knowledge graph can be represented as an RDF/Property <strong>Triple</strong>:</p>
 
-    <div class="extraction-flow">
-Raw Text: "Viktor Orlov registered BlueSky Trading in Cyprus and transferred $2M to Swiss Account 401."
-             │
-             ▼ (Information Extraction via LLM)
-Triple 1: (:Person {name: "Viktor Orlov"}) ──[:REGISTERED]──► (:Company {name: "BlueSky Trading", jurisdiction: "CY"})
-Triple 2: (:Company {name: "BlueSky Trading"}) ──[:TRANSFERRED {amount: 2000000, currency: "USD"}]──► (:Account {iban: "CH99401"})
+    <div class="knowledge-extraction-visual">
+      <!-- Input Narrative -->
+      <div class="raw-narrative-card">
+        <div class="narrative-header">Unstructured Investigation Narrative Excerpt</div>
+        <div class="narrative-quote">
+          &ldquo;<span class="entity-highlight">Viktor Orlov</span> registered <span class="entity-highlight">BlueSky Trading</span> in <span class="entity-highlight">Cyprus</span> and transferred <span class="entity-highlight">$2,000,000 USD</span> to Swiss Account <span class="entity-highlight">CH99401</span>.&rdquo;
+        </div>
+      </div>
+
+      <div class="llm-transform-step">
+        <span>&darr;</span>
+        <span>Information Extraction via Vertex AI Gemini 1.5 (Strict JSON Schema)</span>
+        <span>&darr;</span>
+      </div>
+
+      <!-- Output Triples -->
+      <div class="triples-list">
+        <!-- Triple 1 -->
+        <div class="triple-card">
+          <span class="triple-chip subject">(:Person {name: "Viktor Orlov"})</span>
+          <span class="triple-arrow">&rarr;</span>
+          <span class="triple-chip predicate">[:REGISTERED]</span>
+          <span class="triple-arrow">&rarr;</span>
+          <span class="triple-chip object">(:Company {name: "BlueSky Trading", jurisdiction: "CY"})</span>
+        </div>
+
+        <!-- Triple 2 -->
+        <div class="triple-card">
+          <span class="triple-chip subject">(:Company {name: "BlueSky Trading"})</span>
+          <span class="triple-arrow">&rarr;</span>
+          <span class="triple-chip predicate">[:TRANSFERRED {amount: 2000000, currency: "USD"}]</span>
+          <span class="triple-arrow">&rarr;</span>
+          <span class="triple-chip object">(:Account {iban: "CH99401"})</span>
+        </div>
+      </div>
     </div>
 
     <h2>Using Gemini 1.5 Structured Output (JSON Schema)</h2>

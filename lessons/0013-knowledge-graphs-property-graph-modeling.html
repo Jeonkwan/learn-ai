@@ -6,16 +6,7 @@
   <title>Lesson 0013: Knowledge Graphs & Property Graph Modeling</title>
   <link rel="stylesheet" href="../assets/style.css">
   <style>
-    .graph-schema-box {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 1.5rem;
-      margin: 1.75rem 0;
-      font-family: var(--font-mono);
-      font-size: 0.88rem;
-      line-height: 1.6;
-    }
+    /* Custom lesson-specific tweaks if needed */
   </style>
 </head>
 <body>
@@ -46,20 +37,70 @@
     <h2>The Property Graph Data Model for AML</h2>
     <p>The standard model in Neo4j is the <strong>Labeled Property Graph (LPG)</strong>:</p>
 
-    <div class="graph-schema-box">
-(:Person {id: "P_101", name: "Dmitri V.", nationality: "CY"})
-       │
-       │ [:BENEFICIAL_OWNER_OF {share_pct: 100, since: "2021-03"}]
-       ▼
-(:Company {id: "C_402", name: "Apex Maritime Ltd", jurisdiction: "BVI"})
-       │
-       │ [:HOLDS_ACCOUNT {status: "ACTIVE"}]
-       ▼
-(:Account {iban: "CY29X10029", balance_usd: 4500000})
-       │
-       │ [:TRANSFERRED {amount: 250000, date: "2024-08-14", currency: "USD"}]
-       ▼
-(:Account {iban: "GB88CHAS9901", is_frozen: true})
+    <div class="property-graph-chain">
+      <!-- Node 1: Person -->
+      <div class="graph-chain-item">
+        <div class="graph-node-chip">
+          <span class="node-label-pill person">(:Person)</span>
+          <div class="node-properties">
+            <span class="prop-item">id: <strong>"P_101"</strong></span>
+            <span class="prop-item">name: <strong>"Dmitri V."</strong></span>
+            <span class="prop-item">nationality: <strong>"CY"</strong></span>
+          </div>
+        </div>
+
+        <div class="graph-edge-connector">
+          <span class="edge-pill">[:BENEFICIAL_OWNER_OF]</span>
+          <span class="edge-props">share_pct: 100% &bull; since: "2021-03"</span>
+          <span class="edge-arrow">&darr;</span>
+        </div>
+      </div>
+
+      <!-- Node 2: Company -->
+      <div class="graph-chain-item">
+        <div class="graph-node-chip">
+          <span class="node-label-pill company">(:Company)</span>
+          <div class="node-properties">
+            <span class="prop-item">id: <strong>"C_402"</strong></span>
+            <span class="prop-item">name: <strong>"Apex Maritime Ltd"</strong></span>
+            <span class="prop-item">jurisdiction: <strong>"BVI"</strong></span>
+          </div>
+        </div>
+
+        <div class="graph-edge-connector">
+          <span class="edge-pill">[:HOLDS_ACCOUNT]</span>
+          <span class="edge-props">status: "ACTIVE"</span>
+          <span class="edge-arrow">&darr;</span>
+        </div>
+      </div>
+
+      <!-- Node 3: Source Account -->
+      <div class="graph-chain-item">
+        <div class="graph-node-chip">
+          <span class="node-label-pill account">(:Account)</span>
+          <div class="node-properties">
+            <span class="prop-item">iban: <strong>"CY29X10029"</strong></span>
+            <span class="prop-item">balance: <strong>$4,500,000 USD</strong></span>
+          </div>
+        </div>
+
+        <div class="graph-edge-connector">
+          <span class="edge-pill money-flow">[:TRANSFERRED]</span>
+          <span class="edge-props">amount: $250,000 &bull; date: "2024-08-14"</span>
+          <span class="edge-arrow money-arrow">&darr;</span>
+        </div>
+      </div>
+
+      <!-- Node 4: Destination Account -->
+      <div class="graph-chain-item">
+        <div class="graph-node-chip">
+          <span class="node-label-pill account-frozen">(:Account &bull; FROZEN)</span>
+          <div class="node-properties">
+            <span class="prop-item">iban: <strong>"GB88CHAS9901"</strong></span>
+            <span class="prop-item">is_frozen: <strong>true</strong></span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <h2>Designing Nodes vs. Edges vs. Properties</h2>

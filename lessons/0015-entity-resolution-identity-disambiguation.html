@@ -6,16 +6,7 @@
   <title>Lesson 0015: Entity Resolution & Identity Disambiguation in Graph Data</title>
   <link rel="stylesheet" href="../assets/style.css">
   <style>
-    .er-diagram {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 1.25rem;
-      margin: 1.75rem 0;
-      font-family: var(--font-mono);
-      font-size: 0.85rem;
-      line-height: 1.5;
-    }
+    /* Custom lesson-specific tweaks if needed */
   </style>
 </head>
 <body>
@@ -37,25 +28,62 @@
 
     <h2>The Three Stages of Entity Resolution (ER)</h2>
 
-    <div class="er-diagram">
-[Disparate Extracted Entities]
- "Alexandre Vance"          "A. Vance"              "Vance, Alexander"
-         │                      │                           │
-         ▼                      ▼                           ▼
-[STAGE 1: Deterministic Hard Attribute Blocking]
- &bull; Match on exact Tax IDs, Passport Hashes, or LEI Corporate Identifiers
-         │
-         ▼ (If Hard IDs are missing or obscured)
-[STAGE 2: Fuzzy String & Phonetic Matching]
- &bull; Jaro-Winkler String Distance (> 0.88) + Soundex/Metaphone Phonetic Equivalence
-         │
-         ▼
-[STAGE 3: Graph Topology Correlation]
- &bull; Do both entities share the same registered address, phone number, or bank branch?
-         │
-         ▼ (Confidence Threshold Reached >= 0.92)
-[UNIFIED MASTER NODE in Neo4j]
- (:Person {id: "PERSON_MASTER_771", canonical_name: "Alexandre Vance", aliases: [...]})
+    <div class="er-pipeline-visual">
+      <!-- Disparate Records -->
+      <div class="er-disparate-records">
+        <div class="variant-card">
+          <span class="variant-source">Document 1 (SAR Filing)</span>
+          <div class="variant-name">&ldquo;Alexandre Vance&rdquo;</div>
+          <span class="variant-detail">DOB: 12/04/1974 &bull; Limassol, CY</span>
+        </div>
+
+        <div class="variant-card">
+          <span class="variant-source">Document 2 (Corporate Registry)</span>
+          <div class="variant-name">&ldquo;A. Vance&rdquo;</div>
+          <span class="variant-detail">Director of Ocean Shipping Ltd</span>
+        </div>
+
+        <div class="variant-card">
+          <span class="variant-source">Document 3 (Wire Memo)</span>
+          <div class="variant-name">&ldquo;Vance, Alexander&rdquo;</div>
+          <span class="variant-detail">Beneficial Owner &bull; Acct #9081</span>
+        </div>
+      </div>
+
+      <!-- 3-Stage Pipeline Stack -->
+      <div class="er-stages-stack">
+        <div class="er-stage-item">
+          <span class="er-stage-badge">Stage 1</span>
+          <div class="er-stage-content">
+            <strong>Deterministic Hard Attribute Blocking</strong>
+            <span>Exact matches on Tax IDs, Passport Hashes, or LEI Corporate Identifiers across records.</span>
+          </div>
+        </div>
+
+        <div class="er-stage-item">
+          <span class="er-stage-badge">Stage 2</span>
+          <div class="er-stage-content">
+            <strong>Fuzzy String &amp; Phonetic Distance Scoring</strong>
+            <span>Jaro-Winkler string similarity (&gt; 0.88) + Double Metaphone phonetic equivalence check.</span>
+          </div>
+        </div>
+
+        <div class="er-stage-item">
+          <span class="er-stage-badge">Stage 3</span>
+          <div class="er-stage-content">
+            <strong>Graph Topology Correlation &amp; Co-Occurrence</strong>
+            <span>Checks shared registered office address, common corporate secretary, or identical bank routing code.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resolved Master Node -->
+      <div class="er-resolved-master">
+        <span class="master-badge">Resolution Threshold Met (Confidence &ge; 0.92)</span>
+        <div class="master-node-code">
+          (:Person {id: "PERSON_MASTER_771", canonical_name: "Alexandre Vance", aliases: ["A. Vance", "Vance, Alexander"]})
+        </div>
+      </div>
     </div>
 
     <h2>Merging Fragmented Nodes in Neo4j</h2>

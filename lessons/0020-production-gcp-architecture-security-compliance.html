@@ -6,17 +6,6 @@
   <title>Lesson 0020: Production GCP Architecture, Security & Compliance</title>
   <link rel="stylesheet" href="../assets/style.css">
   <style>
-    .blueprint-box {
-      background: #f8fafc;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 1.5rem;
-      margin: 1.75rem 0;
-      font-family: var(--font-mono);
-      font-size: 0.82rem;
-      line-height: 1.5;
-      overflow-x: auto;
-    }
     .metric-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -48,37 +37,103 @@
 
     <h2>The End-to-End Enterprise Production Blueprint</h2>
 
-    <div class="blueprint-box">
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                        SECURE BANKING VPC SERVICE CONTROLS PERIMETER                   │
-│                                                                                        │
-│  [1. INGESTION]                                                                        │
-│   Bank Dossiers / Scans ──► Cloud Storage Bucket (gs://aml-evidence-drop/)              │
-│                                   │ (GCS Object Finalize Event)                        │
-│                                   ▼                                                    │
-│                             [Eventarc]                                                 │
-│                                   │                                                    │
-│                                   ▼                                                    │
-│  [2. PROCESSING]            [Cloud Run Worker]                                         │
-│                                   ├──► Cloud Document AI (OCR & Table Extraction)      │
-│                                   ├──► Chunking & Metadata Tagging                     │
-│                                   ├──► Vertex AI Embeddings (text-embedding-004)       │
-│                                   └──► Vertex AI Gemini 1.5 (Structured Entity Triples)│
-│                                                                                        │
-│  [3. STORAGE]                     │                                                    │
-│         ┌─────────────────────────┴────────────────────────┐                           │
-│         ▼                                                  ▼                           │
-│   Vertex AI Vector Search                           Neo4j AuraDB on GCP                │
-│   (ScaNN High-Scale Vector Index)                   (Property Graph Network)           │
-│   Accessible via Private Service Connect             Accessible via PSC Subnet         │
-│                                                                                        │
-│  [4. SERVING]                                                                          │
-│   Compliance Web UI ──► [Cloud Run Query Gateway & Router]                             │
-│                                   │                                                    │
-│                                   ├──► Vector Search (Semantic Narratives)             │
-│                                   ├──► Neo4j Cypher (Multi-hop Ownership Chains)       │
-│                                   └──► Vertex AI Gemini 1.5 (Prompt Grounding & SAR)   │
-└────────────────────────────────────────────────────────────────────────────────────────┘
+    <div class="gcp-blueprint-visual">
+      <div class="perimeter-header">
+        <span class="perimeter-badge">🛡️ VPC Service Controls (VPC-SC) Perimeter</span>
+        <h3>Secure Banking Compliance &amp; Retrieval Architecture</h3>
+      </div>
+
+      <div class="blueprint-phases">
+        <!-- Phase 1 -->
+        <div class="blueprint-phase-row phase-1">
+          <span class="phase-tag">1. Event-Driven Ingestion</span>
+          <div class="phase-grid">
+            <div class="phase-node">
+              <strong>Bank Dossiers &amp; Scans</strong>
+              <p>Wire slips, trade invoices, whistleblower memos</p>
+            </div>
+            <div class="phase-node">
+              <strong>Cloud Storage Drop Bucket</strong>
+              <code>gs://aml-evidence-drop/</code>
+              <p>Triggers <code>GCS Object Finalize</code> event</p>
+            </div>
+            <div class="phase-node">
+              <strong>Google Cloud Eventarc</strong>
+              <code>google.cloud.storage.object.v1.finalized</code>
+              <p>Serverless routing to ingestion consumer</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="phase-link-arrow">&darr;</div>
+
+        <!-- Phase 2 -->
+        <div class="blueprint-phase-row phase-2">
+          <span class="phase-tag">2. Processing &amp; Knowledge Extraction</span>
+          <div class="phase-grid">
+            <div class="phase-node">
+              <strong>Cloud Run Worker</strong>
+              <p>Orchestrates parsing, chunking, and dual-encoding</p>
+            </div>
+            <div class="phase-node">
+              <strong>Cloud Document AI</strong>
+              <p>OCR &amp; Form Parser preserving table geometry</p>
+            </div>
+            <div class="phase-node">
+              <strong>Vertex AI text-embedding-004</strong>
+              <p>768-dim dense semantic vector coordinates</p>
+            </div>
+            <div class="phase-node">
+              <strong>Gemini 1.5 Structured Output</strong>
+              <p>Deterministic JSON entity &amp; relation triples</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="phase-link-arrow">&darr;</div>
+
+        <!-- Phase 3 -->
+        <div class="blueprint-phase-row phase-3">
+          <span class="phase-tag">3. Enterprise Storage &amp; Indexing</span>
+          <div class="phase-grid">
+            <div class="phase-node">
+              <strong>Vertex AI Vector Search</strong>
+              <code>ScaNN ANN Cluster</code>
+              <p>Sub-5ms p99 similarity search via Private Service Connect</p>
+            </div>
+            <div class="phase-node">
+              <strong>Neo4j AuraDB on GCP</strong>
+              <code>Property Graph Network</code>
+              <p>Multi-hop entity resolution &amp; Cypher rings via PSC Subnet</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="phase-link-arrow">&darr;</div>
+
+        <!-- Phase 4 -->
+        <div class="blueprint-phase-row phase-4">
+          <span class="phase-tag">4. Serving, Grounding &amp; Compliance Audit</span>
+          <div class="phase-grid">
+            <div class="phase-node">
+              <strong>Compliance Web UI</strong>
+              <p>Interactive investigator portal &amp; alert triage</p>
+            </div>
+            <div class="phase-node">
+              <strong>Cloud Run Router &amp; Gateway</strong>
+              <p>Intelligent routing + Reciprocal Rank Fusion (RRF)</p>
+            </div>
+            <div class="phase-node">
+              <strong>Vertex AI Gemini 1.5</strong>
+              <p>Grounded SAR synthesis with line-item citations</p>
+            </div>
+            <div class="phase-node">
+              <strong>BigQuery Audit Logging</strong>
+              <p>Tamper-evident query, chunk, and response audit trail</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <h2>Security & Banking Compliance Invariants</h2>

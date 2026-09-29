@@ -636,6 +636,717 @@ table th {
   pointer-events: none;
 }
 
+/* ==========================================================================
+   Diagrams Styles for Mobile Lessons
+   ========================================================================== */
+.resource-hierarchy, .retrieval-funnel, .property-graph-chain,
+.knowledge-extraction-visual, .er-pipeline-visual, .router-pipeline-visual,
+.gcp-blueprint-visual {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem 0.8rem;
+  margin: 1.5rem 0;
+}
+
+/* Lesson 0009: 3-Tier Resource Hierarchy */
+.tier-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.9rem 0.85rem;
+  position: relative;
+}
+.tier-card.tier-1 { border-left: 4px solid var(--accent); }
+.tier-card.tier-2 { border-left: 4px solid #8b5cf6; }
+.tier-card.tier-3 { border-left: 4px solid #10b981; }
+
+.tier-badge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+.tier-1 .tier-badge { background: var(--accent-light); color: var(--accent); }
+.tier-2 .tier-badge { background: #f3e8ff; color: #7c3aed; }
+.tier-3 .tier-badge { background: #d1fae5; color: #047857; }
+
+.tier-header {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.4rem;
+}
+.tier-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+.tier-header h4 {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  color: var(--text);
+}
+.tier-header code {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--accent);
+}
+.tier-card p {
+  margin: 0.35rem 0;
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  color: var(--text);
+  line-height: 1.4;
+}
+.tier-note {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+.tier-specs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-top: 0.65rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--border);
+}
+.tier-specs span {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+.tier-connector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem 0;
+}
+.connector-badge {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 0.15rem 0.5rem;
+  border-radius: 12px;
+  text-align: center;
+}
+.connector-arrow {
+  color: var(--accent);
+  font-size: 1.15rem;
+  font-weight: bold;
+  line-height: 1;
+  margin-top: 0.15rem;
+}
+
+/* Lesson 0011: Funnel */
+.funnel-tier {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.funnel-tier.level-corpus { border-left: 4px solid #64748b; }
+.funnel-tier.level-candidates { border-left: 4px solid #f59e0b; }
+.funnel-tier.level-gold { border-left: 4px solid #10b981; background: #f0fdf4; }
+.funnel-count {
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+.level-corpus .funnel-count { color: #64748b; }
+.level-candidates .funnel-count { color: #d97706; }
+.level-gold .funnel-count { color: #059669; }
+.funnel-info strong {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  color: var(--text);
+}
+.funnel-info span {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+.funnel-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+.divider-icon {
+  color: var(--accent);
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+.funnel-stage-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin: 0.4rem 0;
+}
+.stage-subcard {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 0.85rem;
+}
+.stage-subcard.highlight {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+.stage-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  background: #e2e8f0;
+  color: #475569;
+  margin-bottom: 0.25rem;
+}
+.stage-tag.deep { background: #fef3c7; color: #b45309; }
+.stage-subcard h4 {
+  margin: 0 0 0.2rem;
+  font-family: var(--font-sans);
+  font-size: 0.86rem;
+  color: var(--text);
+}
+.stage-subcard p {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+.stage-plus {
+  text-align: center;
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: var(--text-muted);
+}
+
+/* Lesson 0013: Property Graph Chain */
+.graph-chain-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.graph-node-chip {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.75rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.node-label-pill {
+  display: inline-block;
+  align-self: flex-start;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+}
+.node-label-pill.person { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+.node-label-pill.company { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+.node-label-pill.account { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+.node-label-pill.account-frozen { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+.node-properties {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+}
+.prop-item { color: var(--text-muted); }
+.prop-item strong { color: var(--text); }
+.graph-edge-connector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.6rem 0;
+}
+.edge-pill {
+  background: #f3e8ff;
+  border: 1px solid #e9d5ff;
+  color: #7e22ce;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.6rem;
+  border-radius: 12px;
+  text-align: center;
+}
+.edge-pill.money-flow { background: #ffe4e6; border-color: #fecdd3; color: #e11d48; }
+.edge-props {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+  text-align: center;
+}
+.edge-arrow {
+  color: #7e22ce;
+  font-size: 1.1rem;
+  line-height: 1;
+  font-weight: bold;
+}
+.edge-pill.money-flow ~ .edge-arrow { color: #e11d48; }
+
+/* Lesson 0014: Extraction Visual Flow */
+.raw-narrative-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-left: 4px solid #f59e0b;
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 0.85rem;
+}
+.narrative-header {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #d97706;
+  margin-bottom: 0.25rem;
+}
+.narrative-quote {
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--text);
+}
+.entity-highlight {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 0.1rem 0.25rem;
+  border-radius: 3px;
+  font-weight: 600;
+}
+.llm-transform-step {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-align: center;
+}
+.triples-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+.triple-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.triple-chip {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 4px;
+}
+.triple-chip.subject { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+.triple-chip.predicate { background: #f3e8ff; color: #7c3aed; border: 1px solid #e9d5ff; font-weight: 700; text-align: center; }
+.triple-chip.object { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+.triple-arrow { display: none; }
+
+/* Lesson 0015: Entity Resolution */
+.er-disparate-records {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+}
+.variant-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
+}
+.variant-source {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+.variant-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0.15rem 0;
+}
+.variant-detail {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+.er-stages-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+}
+.er-stage-item {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.65rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.er-stage-badge {
+  display: inline-block;
+  align-self: flex-start;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  background: #e2e8f0;
+  color: #475569;
+}
+.er-stage-content strong {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 0.84rem;
+  color: var(--text);
+}
+.er-stage-content span {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.er-resolved-master {
+  background: #f0fdf4;
+  border: 2px solid #86efac;
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  margin-top: 0.85rem;
+  text-align: center;
+}
+.master-badge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: #dcfce7;
+  color: #15803d;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  margin-bottom: 0.35rem;
+}
+.master-node-code {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: #166534;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+/* Lesson 0016: Cypher Box */
+.cypher-box {
+  background: #1e1e2e;
+  color: #cdd6f4;
+  border: 1px solid #313244;
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  margin: 1.1rem 0;
+  font-family: var(--font-mono);
+  font-size: clamp(0.75rem, 2.7vw, 0.84rem);
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-x: auto;
+  position: relative;
+}
+.cypher-box::before {
+  content: "CYPHER";
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #89b4fa;
+  margin-bottom: 0.4rem;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+}
+
+/* Lesson 0019: Router Visual */
+.router-query-box {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 0.85rem;
+  text-align: center;
+}
+.router-query-box strong {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--accent);
+  display: block;
+  margin-bottom: 0.15rem;
+}
+.router-query-box p {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  color: var(--text);
+}
+.router-gateway-card {
+  background: #f8fbff;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  padding: 0.8rem 0.9rem;
+  text-align: center;
+}
+.gateway-badge {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: #dbeafe;
+  color: #1e40af;
+  padding: 0.12rem 0.45rem;
+  border-radius: 4px;
+}
+.router-gateway-card h4 {
+  margin: 0.3rem 0 0.15rem;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  color: var(--text);
+}
+.router-gateway-card p {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+.router-paths-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin: 0.75rem 0;
+}
+.path-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+.path-badge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.12rem 0.4rem;
+  border-radius: 3px;
+  margin-bottom: 0.3rem;
+}
+.path-badge.p1 { background: #e0f2fe; color: #0284c7; }
+.path-badge.p2 { background: #f3e8ff; color: #7c3aed; }
+.path-badge.p3 { background: #dcfce7; color: #16a34a; }
+.path-card strong {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 0.84rem;
+  color: var(--text);
+  margin-bottom: 0.15rem;
+}
+.path-card p {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+.fusion-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 0.85rem;
+  text-align: center;
+}
+.fusion-card strong {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 0.86rem;
+  color: var(--text);
+}
+.fusion-card span {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.final-gen-card {
+  background: #faf5ff;
+  border: 1px solid #e9d5ff;
+  border-radius: 8px;
+  padding: 0.75rem 0.85rem;
+  text-align: center;
+}
+.final-gen-card strong {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  color: #6b21a8;
+}
+.final-gen-card span {
+  font-family: var(--font-sans);
+  font-size: 0.76rem;
+  color: #7e22ce;
+}
+
+/* Lesson 0020: GCP Blueprint */
+.gcp-blueprint-visual {
+  border: 2px solid #3b82f6;
+}
+.perimeter-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1rem;
+}
+.perimeter-badge {
+  align-self: flex-start;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+}
+.perimeter-header h3 {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 0.98rem;
+  color: var(--text);
+}
+.blueprint-phases {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.blueprint-phase-row {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.85rem;
+}
+.phase-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.12rem 0.45rem;
+  border-radius: 4px;
+  margin-bottom: 0.45rem;
+}
+.phase-1 .phase-tag { background: #e0f2fe; color: #0284c7; }
+.phase-2 .phase-tag { background: #fef3c7; color: #b45309; }
+.phase-3 .phase-tag { background: #f3e8ff; color: #7c3aed; }
+.phase-4 .phase-tag { background: #dcfce7; color: #16a34a; }
+.phase-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.phase-node {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.65rem 0.75rem;
+}
+.phase-node strong {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 0.84rem;
+  color: var(--text);
+}
+.phase-node code {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--accent);
+}
+.phase-node p {
+  margin: 0.2rem 0 0;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.phase-link-arrow {
+  text-align: center;
+  color: var(--accent);
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .tier-1 .tier-badge { background: #152942; color: #58a6ff; }
+  .tier-2 .tier-badge { background: #2e1a47; color: #c084fc; }
+  .tier-3 .tier-badge { background: #064e3b; color: #6ee7b7; }
+  .funnel-tier.level-gold { background: #062e1e; border-left-color: #34d399; }
+  .stage-subcard.highlight { background: #2a2007; border-color: #b45309; }
+  .node-label-pill.person { background: #0c2d48; color: #7dd3fc; border-color: #0369a1; }
+  .node-label-pill.company { background: #382506; color: #fde047; border-color: #b45309; }
+  .node-label-pill.account { background: #052e16; color: #86efac; border-color: #15803d; }
+  .node-label-pill.account-frozen { background: #450a0a; color: #fca5a5; border-color: #b91c1c; }
+  .edge-pill { background: #2e1065; border-color: #581c87; color: #d8b4fe; }
+  .edge-pill.money-flow { background: #4c0519; border-color: #881337; color: #fda4af; }
+  .raw-narrative-card { background: #1c1917; border-left-color: #d97706; }
+  .entity-highlight { background: #451a03; color: #fde047; }
+  .triple-chip.subject { background: #0c2d48; color: #7dd3fc; border-color: #0369a1; }
+  .triple-chip.predicate { background: #2e1065; color: #d8b4fe; border-color: #581c87; }
+  .triple-chip.object { background: #052e16; color: #86efac; border-color: #15803d; }
+  .er-resolved-master { background: #052e16; border-color: #22c55e; }
+  .master-badge { background: #14532d; color: #86efac; }
+  .master-node-code { color: #86efac; }
+  .router-gateway-card { background: #111d33; border-color: #1e3a8a; }
+  .gateway-badge { background: #1e3a8a; color: #93c5fd; }
+  .final-gen-card { background: #28143d; border-color: #581c87; }
+  .final-gen-card strong { color: #e9d5ff; }
+  .final-gen-card span { color: #c084fc; }
+  .gcp-blueprint-visual { border-color: #2563eb; }
+  .perimeter-badge { background: #172554; color: #93c5fd; border-color: #1e40af; }
+}
+
 .course-card {
   background: var(--surface);
   border: 1px solid var(--border);

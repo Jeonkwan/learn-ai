@@ -6,15 +6,7 @@
   <title>Lesson 0011: Retrieval, Metadata Filtering & Cross-Encoder Re-Ranking</title>
   <link rel="stylesheet" href="../assets/style.css">
   <style>
-    .funnel-container {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 1.5rem;
-      margin: 1.75rem 0;
-      font-family: var(--font-mono);
-      font-size: 0.88rem;
-    }
+    /* Custom lesson-specific tweaks if needed */
   </style>
 </head>
 <body>
@@ -32,19 +24,77 @@
     <h2>The Production Two-Stage Retrieval Funnel</h2>
     <p>Enterprise search systems use a multi-stage funnel that balances computational speed against deep linguistic precision:</p>
 
-    <div class="funnel-container">
-[10,000,000 Total Archived Chunks]
-             │
-             ▼  STAGE 1A: Metadata Pre-Filtering (Vertex AI Restricts)
-                &bull; Hard filters: jurisdiction == "CY" AND year >= 2023
-             ▼  STAGE 1B: Hybrid Fast Search (ANN Vector + BM25 Keywords)
-                &bull; Sub-5ms latency across candidate pool
-[Top 50 Broad Candidate Chunks Retrieved]
-             │
-             ▼  STAGE 2: Cross-Encoder Re-Ranking (Deep Semantic Attention)
-                &bull; Evaluates (Query + Document) jointly through transformer layers
-                &bull; Takes ~50ms on 50 candidates; scores true relevance
-[Top 3 Gold Evidence Chunks Injected into Prompt Context]
+    <div class="retrieval-funnel">
+      <!-- Level 0: Corpus -->
+      <div class="funnel-tier level-corpus">
+        <div class="funnel-count">10,000,000</div>
+        <div class="funnel-info">
+          <strong>Total Archived Document Chunks</strong>
+          <span>All past SAR narratives, customs invoices, wire transaction logs</span>
+        </div>
+      </div>
+
+      <div class="funnel-divider">
+        <span class="divider-icon">&darr;</span>
+        <span class="divider-text">Stage 1: Fast Candidate Screening (Sub-5ms)</span>
+      </div>
+
+      <!-- Stage 1 Box -->
+      <div class="funnel-stage-box">
+        <div class="stage-subcard">
+          <span class="stage-tag">Stage 1A</span>
+          <h4>Metadata Pre-Filtering (Vertex Restricts)</h4>
+          <p>Hard-filters out irrelevant records: <code>jurisdiction == "CY" AND year &gt;= 2023</code>.</p>
+        </div>
+        <div class="stage-plus">+</div>
+        <div class="stage-subcard">
+          <span class="stage-tag">Stage 1B</span>
+          <h4>Hybrid Fast Search (ScaNN + BM25)</h4>
+          <p>Combines dense semantic vector proximity with sparse keyword exact-matching.</p>
+        </div>
+      </div>
+
+      <div class="funnel-divider">
+        <span class="divider-icon">&darr;</span>
+        <span class="divider-text">Narrowed down to Top 50 Candidates</span>
+      </div>
+
+      <!-- Level 1: Candidates -->
+      <div class="funnel-tier level-candidates">
+        <div class="funnel-count">50</div>
+        <div class="funnel-info">
+          <strong>Broad Candidate Chunks</strong>
+          <span>High recall, moderate precision. Fast Bi-Encoder screening complete.</span>
+        </div>
+      </div>
+
+      <div class="funnel-divider">
+        <span class="divider-icon">&darr;</span>
+        <span class="divider-text">Stage 2: Deep Attention Scoring (~40ms)</span>
+      </div>
+
+      <!-- Stage 2 Box -->
+      <div class="funnel-stage-box single">
+        <div class="stage-subcard highlight">
+          <span class="stage-tag deep">Stage 2</span>
+          <h4>Cross-Encoder Re-Ranking (Full Transformer Attention)</h4>
+          <p>Passes <code>(Query + Document)</code> pairs together through deep transformer layers. Computes fine-grained semantic relevance score (0.0 to 1.0) without vector compression loss.</p>
+        </div>
+      </div>
+
+      <div class="funnel-divider">
+        <span class="divider-icon">&darr;</span>
+        <span class="divider-text">Extracted Highest-Scoring Gold Nuggets</span>
+      </div>
+
+      <!-- Level 2: Gold Evidence -->
+      <div class="funnel-tier level-gold">
+        <div class="funnel-count">3</div>
+        <div class="funnel-info">
+          <strong>Gold Ground-Truth Evidence Chunks</strong>
+          <span>Directly injected into Gemini 1.5 prompt context with citations and relevance scores.</span>
+        </div>
+      </div>
     </div>
 
     <h2>1. Metadata Pre-Filtering with Vertex AI Restricts</h2>

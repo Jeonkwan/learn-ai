@@ -6,15 +6,7 @@
   <title>Lesson 0009: Vertex AI Vector Search in Production</title>
   <link rel="stylesheet" href="../assets/style.css">
   <style>
-    .hierarchy-box {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 1.25rem;
-      margin: 1.75rem 0;
-      font-family: var(--font-mono);
-      font-size: 0.88rem;
-    }
+    /* Custom lesson-specific tweaks if needed */
   </style>
 </head>
 <body>
@@ -29,21 +21,68 @@
 
     <h2>The 3-Tier Resource Hierarchy</h2>
 
-    <div class="hierarchy-box">
-[Tier 1: Cold Storage Data]
- Cloud Storage Bucket (gs://aml-embeddings/data.jsonl)
- &bull; Stores raw JSONL records: {"id": "chunk_042", "embedding": [...], "restricts": [...]}
-         │
-         ▼ (Trigger Index Build via gcloud / API)
-[Tier 2: The Compiled Index]
- Vertex AI Index (projects/123/locations/us-central1/indexes/456)
- &bull; The compiled ScaNN binary data structure (cannot serve queries directly)
-         │
-         ▼ (Deploy to Serving Cluster)
-[Tier 3: The Live Serving Cluster]
- Vertex AI Index Endpoint (projects/123/locations/us-central1/indexEndpoints/789)
- &bull; Hosts the DeployedIndex on managed GCE nodes (e.g., e2-standard-16)
- &bull; Serves live sub-5ms queries over Private Service Connect (PSC) or VPC Peering
+    <div class="resource-hierarchy">
+      <!-- Tier 1 -->
+      <div class="tier-card tier-1">
+        <div class="tier-badge">Tier 1: Cold Storage Data</div>
+        <div class="tier-content">
+          <div class="tier-header">
+            <span class="tier-icon">🪣</span>
+            <div>
+              <h4>Cloud Storage Bucket</h4>
+              <code>gs://aml-embeddings/data.jsonl</code>
+            </div>
+          </div>
+          <p>Raw JSONL vector dump: <code>{"id": "chunk_042", "embedding": [...], "restricts": [...]}</code></p>
+          <div class="tier-note">Low cost, persistent archive. Cannot be queried directly.</div>
+        </div>
+      </div>
+
+      <div class="tier-connector">
+        <span class="connector-badge">Trigger Index Build via gcloud / REST API</span>
+        <span class="connector-arrow">&darr;</span>
+      </div>
+
+      <!-- Tier 2 -->
+      <div class="tier-card tier-2">
+        <div class="tier-badge">Tier 2: The Compiled Index</div>
+        <div class="tier-content">
+          <div class="tier-header">
+            <span class="tier-icon">⚙️</span>
+            <div>
+              <h4>Vertex AI Index</h4>
+              <code>projects/123/locations/us-central1/indexes/456</code>
+            </div>
+          </div>
+          <p>Compiled ScaNN anisotropic vector quantization &amp; graph data structure.</p>
+          <div class="tier-note">Static asset. No compute or query endpoint attached yet ($0 serving cost).</div>
+        </div>
+      </div>
+
+      <div class="tier-connector">
+        <span class="connector-badge">Deploy Index to Serving Cluster</span>
+        <span class="connector-arrow">&darr;</span>
+      </div>
+
+      <!-- Tier 3 -->
+      <div class="tier-card tier-3">
+        <div class="tier-badge">Tier 3: The Live Serving Cluster</div>
+        <div class="tier-content">
+          <div class="tier-header">
+            <span class="tier-icon">⚡</span>
+            <div>
+              <h4>Vertex AI Index Endpoint</h4>
+              <code>projects/123/locations/us-central1/indexEndpoints/789</code>
+            </div>
+          </div>
+          <p>Hosts the <code>DeployedIndex</code> on managed GCE nodes (e.g., <code>e2-standard-16</code>).</p>
+          <div class="tier-specs">
+            <span>⏱️ Sub-5ms p99 SLA</span>
+            <span>🔒 Private Service Connect (PSC) / VPC Peering</span>
+            <span>📈 Autoscaling 2&ndash;5 replicas</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <h2>Batch Updates vs. Streaming Updates</h2>

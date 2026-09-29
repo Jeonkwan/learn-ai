@@ -539,3 +539,865 @@ footer a:hover {
     color: #57ab5a;
   }
 }
+
+/* ==========================================================================
+   Lesson 0009: 3-Tier Resource Hierarchy Component
+   ========================================================================== */
+.resource-hierarchy {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+.tier-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.25rem;
+  position: relative;
+}
+.tier-card.tier-1 { border-left: 4px solid #1a73e8; }
+.tier-card.tier-2 { border-left: 4px solid #8b5cf6; }
+.tier-card.tier-3 { border-left: 4px solid #10b981; }
+
+.tier-badge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  margin-bottom: 0.75rem;
+}
+.tier-1 .tier-badge { background: #e8f0fe; color: #1a73e8; }
+.tier-2 .tier-badge { background: #f3e8ff; color: #7c3aed; }
+.tier-3 .tier-badge { background: #d1fae5; color: #047857; }
+
+.tier-header {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 0.6rem;
+}
+.tier-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+.tier-header h4 {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 1.1rem;
+  color: var(--text);
+}
+.tier-header code {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--accent);
+  background: var(--code-bg);
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+}
+.tier-card p {
+  margin: 0.4rem 0;
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  color: var(--text);
+  line-height: 1.45;
+}
+.tier-note {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-top: 0.35rem;
+}
+.tier-specs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px dashed var(--border);
+}
+.tier-specs span {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  color: var(--text-muted);
+}
+.tier-connector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.75rem 0;
+  position: relative;
+}
+.connector-badge {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 0.2rem 0.65rem;
+  border-radius: 20px;
+  z-index: 1;
+}
+.connector-arrow {
+  color: var(--accent);
+  font-size: 1.25rem;
+  line-height: 1;
+  font-weight: bold;
+  margin-top: 0.2rem;
+}
+
+/* ==========================================================================
+   Lesson 0011: Multi-Stage Retrieval Funnel Component
+   ========================================================================== */
+.retrieval-funnel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+.funnel-tier {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+.funnel-tier.level-corpus {
+  border-left: 5px solid #64748b;
+}
+.funnel-tier.level-candidates {
+  border-left: 5px solid #f59e0b;
+  margin: 0 auto;
+  max-width: 90%;
+}
+.funnel-tier.level-gold {
+  border-left: 5px solid #10b981;
+  background: #f0fdf4;
+  margin: 0 auto;
+  max-width: 80%;
+}
+.funnel-count {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-weight: 800;
+  min-width: 140px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.level-corpus .funnel-count { color: #64748b; }
+.level-candidates .funnel-count { color: #d97706; }
+.level-gold .funnel-count { color: #059669; }
+.funnel-info strong {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  color: var(--text);
+  margin-bottom: 0.2rem;
+}
+.funnel-info span {
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+.funnel-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 0;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
+.divider-icon {
+  color: var(--accent);
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+.funnel-stage-box {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 0.85rem;
+  margin: 0.5rem 0;
+}
+.funnel-stage-box.single {
+  grid-template-columns: 1fr;
+}
+.stage-subcard {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+}
+.stage-subcard.highlight {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+.stage-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  background: #e2e8f0;
+  color: #475569;
+  margin-bottom: 0.35rem;
+}
+.stage-tag.deep {
+  background: #fef3c7;
+  color: #b45309;
+}
+.stage-subcard h4 {
+  margin: 0 0 0.25rem;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  color: var(--text);
+}
+.stage-subcard p {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+.stage-plus {
+  font-weight: bold;
+  font-size: 1.25rem;
+  color: var(--text-muted);
+}
+
+/* ==========================================================================
+   Lesson 0013: Property Graph Chain Component
+   ========================================================================== */
+.property-graph-chain {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+.graph-chain-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+.graph-node-chip {
+  width: 100%;
+  max-width: 580px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.85rem 1.15rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+}
+.node-label-pill {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.node-label-pill.person { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+.node-label-pill.company { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+.node-label-pill.account { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+.node-label-pill.account-frozen { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+
+.node-properties {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
+.prop-item {
+  color: var(--text-muted);
+}
+.prop-item strong {
+  color: var(--text);
+  font-weight: 600;
+}
+.graph-edge-connector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.75rem 0;
+  position: relative;
+}
+.edge-pill {
+  background: #f3e8ff;
+  border: 1px solid #e9d5ff;
+  color: #7e22ce;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 0.25rem 0.75rem;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+.edge-pill.money-flow {
+  background: #ffe4e6;
+  border-color: #fecdd3;
+  color: #e11d48;
+}
+.edge-props {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+.edge-arrow {
+  color: #7e22ce;
+  font-size: 1.15rem;
+  line-height: 1;
+  font-weight: bold;
+}
+.edge-pill.money-flow + .edge-props + .edge-arrow,
+.edge-arrow.money-arrow {
+  color: #e11d48;
+}
+
+/* ==========================================================================
+   Lesson 0014: Knowledge Extraction Visual Flow
+   ========================================================================== */
+.knowledge-extraction-visual {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+.raw-narrative-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-left: 4px solid #f59e0b;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+}
+.narrative-header {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #d97706;
+  margin-bottom: 0.35rem;
+}
+.narrative-quote {
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  line-height: 1.55;
+  color: var(--text);
+}
+.entity-highlight {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-weight: 600;
+}
+.llm-transform-step {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  padding: 0.65rem 0;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.triples-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.triple-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+.triple-chip {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 6px;
+}
+.triple-chip.subject { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-weight: 600; }
+.triple-chip.predicate { background: #f3e8ff; color: #7e22ce; border: 1px solid #e9d5ff; font-weight: 700; }
+.triple-chip.object { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; font-weight: 600; }
+.triple-arrow {
+  color: var(--text-muted);
+  font-weight: bold;
+}
+
+/* ==========================================================================
+   Lesson 0015: Entity Resolution Pipeline Component
+   ========================================================================== */
+.er-pipeline-visual {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+.er-disparate-records {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+.variant-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 0.85rem;
+  font-family: var(--font-sans);
+}
+.variant-source {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+.variant-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0.2rem 0;
+}
+.variant-detail {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.er-stages-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin: 0.75rem 0;
+}
+.er-stage-item {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.er-stage-badge {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  background: #e2e8f0;
+  color: #475569;
+  flex-shrink: 0;
+}
+.er-stage-content strong {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  color: var(--text);
+}
+.er-stage-content span {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+.er-resolved-master {
+  background: #f0fdf4;
+  border: 2px solid #86efac;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin-top: 1rem;
+  text-align: center;
+}
+.master-badge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: #dcfce7;
+  color: #15803d;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  margin-bottom: 0.4rem;
+}
+.master-node-code {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: #166534;
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   Lesson 0016: Enhanced Cypher Box with syntax header
+   ========================================================================== */
+.cypher-box {
+  background: #1e1e2e;
+  color: #cdd6f4;
+  border: 1px solid #313244;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin: 1.25rem 0;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-x: auto;
+  position: relative;
+}
+.cypher-box::before {
+  content: "CYPHER";
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #89b4fa;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+}
+
+/* ==========================================================================
+   Lesson 0019: Intelligent Query Router Pipeline Component
+   ========================================================================== */
+.router-pipeline-visual {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+.router-query-box {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  text-align: center;
+}
+.router-query-box strong {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--accent);
+  display: block;
+  margin-bottom: 0.2rem;
+}
+.router-query-box p {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  color: var(--text);
+}
+.router-gateway-card {
+  background: #f8fbff;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  padding: 0.9rem 1.15rem;
+  text-align: center;
+  margin: 0 auto;
+  max-width: 520px;
+}
+.gateway-badge {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: #dbeafe;
+  color: #1e40af;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+}
+.router-gateway-card h4 {
+  margin: 0.35rem 0 0.2rem;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  color: var(--text);
+}
+.router-gateway-card p {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.router-paths-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.85rem;
+  margin: 1rem 0;
+}
+.path-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+}
+.path-badge {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  align-self: flex-start;
+  margin-bottom: 0.4rem;
+}
+.path-badge.p1 { background: #e0f2fe; color: #0284c7; }
+.path-badge.p2 { background: #f3e8ff; color: #7c3aed; }
+.path-badge.p3 { background: #dcfce7; color: #16a34a; }
+.path-card strong {
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  color: var(--text);
+  margin-bottom: 0.25rem;
+}
+.path-card p {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+.fusion-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  text-align: center;
+  max-width: 520px;
+  margin: 0 auto;
+}
+.fusion-card strong {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  color: var(--text);
+}
+.fusion-card span {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+.final-gen-card {
+  background: #faf5ff;
+  border: 1px solid #e9d5ff;
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  text-align: center;
+  max-width: 520px;
+  margin: 0 auto;
+}
+.final-gen-card strong {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 0.92rem;
+  color: #6b21a8;
+}
+.final-gen-card span {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: #7e22ce;
+}
+
+/* ==========================================================================
+   Lesson 0020: End-to-End Enterprise Production Blueprint Component
+   ========================================================================== */
+.gcp-blueprint-visual {
+  background: var(--surface);
+  border: 2px solid #3b82f6;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.08);
+}
+.perimeter-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 1.25rem;
+}
+.perimeter-badge {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  padding: 0.25rem 0.65rem;
+  border-radius: 4px;
+}
+.perimeter-header h3 {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 1.1rem;
+  color: var(--text);
+}
+.blueprint-phases {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+.blueprint-phase-row {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+}
+.phase-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+.phase-1 .phase-tag { background: #e0f2fe; color: #0284c7; }
+.phase-2 .phase-tag { background: #fef3c7; color: #b45309; }
+.phase-3 .phase-tag { background: #f3e8ff; color: #7c3aed; }
+.phase-4 .phase-tag { background: #dcfce7; color: #16a34a; }
+
+.phase-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+}
+.phase-node {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 0.85rem;
+}
+.phase-node strong {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  color: var(--text);
+  margin-bottom: 0.15rem;
+}
+.phase-node code {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--accent);
+}
+.phase-node p {
+  margin: 0.3rem 0 0;
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+.phase-link-arrow {
+  text-align: center;
+  color: var(--accent);
+  font-weight: bold;
+  font-size: 1.25rem;
+  line-height: 1;
+  margin: -0.25rem 0;
+}
+
+/* ==========================================================================
+   Responsive Mobile Viewport Overrides (< 650px)
+   ========================================================================== */
+@media (max-width: 650px) {
+  .resource-hierarchy, .retrieval-funnel, .property-graph-chain,
+  .knowledge-extraction-visual, .er-pipeline-visual, .router-pipeline-visual,
+  .gcp-blueprint-visual {
+    padding: 1rem 0.75rem;
+  }
+  .funnel-stage-box {
+    grid-template-columns: 1fr;
+  }
+  .stage-plus {
+    text-align: center;
+  }
+  .funnel-tier {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+  .funnel-count {
+    text-align: left;
+    min-width: unset;
+  }
+  .er-disparate-records, .router-paths-grid {
+    grid-template-columns: 1fr;
+  }
+  .graph-node-chip {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+}
+
+/* ==========================================================================
+   Dark Mode Support for All Diagrams
+   ========================================================================== */
+@media (prefers-color-scheme: dark) {
+  .tier-1 .tier-badge { background: #152942; color: #58a6ff; }
+  .tier-2 .tier-badge { background: #2e1a47; color: #c084fc; }
+  .tier-3 .tier-badge { background: #064e3b; color: #6ee7b7; }
+  .funnel-tier.level-gold { background: #062e1e; border-left-color: #34d399; }
+  .stage-subcard.highlight { background: #2a2007; border-color: #b45309; }
+  .node-label-pill.person { background: #0c2d48; color: #7dd3fc; border-color: #0369a1; }
+  .node-label-pill.company { background: #382506; color: #fde047; border-color: #b45309; }
+  .node-label-pill.account { background: #052e16; color: #86efac; border-color: #15803d; }
+  .node-label-pill.account-frozen { background: #450a0a; color: #fca5a5; border-color: #b91c1c; }
+  .edge-pill { background: #2e1065; border-color: #581c87; color: #d8b4fe; }
+  .edge-pill.money-flow { background: #4c0519; border-color: #881337; color: #fda4af; }
+  .raw-narrative-card { background: #1c1917; border-left-color: #d97706; }
+  .entity-highlight { background: #451a03; color: #fde047; }
+  .triple-chip.subject { background: #0c2d48; color: #7dd3fc; border-color: #0369a1; }
+  .triple-chip.predicate { background: #2e1065; color: #d8b4fe; border-color: #581c87; }
+  .triple-chip.object { background: #052e16; color: #86efac; border-color: #15803d; }
+  .er-resolved-master { background: #052e16; border-color: #22c55e; }
+  .master-badge { background: #14532d; color: #86efac; }
+  .master-node-code { color: #86efac; }
+  .router-gateway-card { background: #111d33; border-color: #1e3a8a; }
+  .gateway-badge { background: #1e3a8a; color: #93c5fd; }
+  .final-gen-card { background: #28143d; border-color: #581c87; }
+  .final-gen-card strong { color: #e9d5ff; }
+  .final-gen-card span { color: #c084fc; }
+  .gcp-blueprint-visual { border-color: #2563eb; }
+  .perimeter-badge { background: #172554; color: #93c5fd; border-color: #1e40af; }
+}
